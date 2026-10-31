@@ -243,6 +243,9 @@ table.st tr[data-ap]:hover td{background:var(--s2)}
 .rk.hd{font:600 13px var(--cond);color:var(--m);border-top:0}
 .rk .r{text-align:right}.rk .up{color:var(--g)}.rk .dn{color:var(--r)}
 @media (max-width:620px){.rk{grid-template-columns:1fr 50px 90px 56px}.rk .x{display:none}}
+.m63{position:relative;z-index:2;margin-top:6px;font-size:13.5px;color:#fff;background:rgba(10,18,32,.85);border-radius:8px;padding:5px 9px;display:inline-block;text-shadow:var(--ts)}
+.m63 b{color:var(--amb);font:800 17px var(--cond)}.m63 span{color:var(--m);font-size:12px}
+.row .rx .ms{color:var(--r);font-weight:700}
 /* data */
 .fld{display:grid;gap:6px;margin-bottom:12px}
 .fld label{font-size:13.5px;color:var(--m)}
@@ -634,7 +637,7 @@ async function refreshHybrid(useApi){
     await DB.put("fx",changed);buildStats();
     const snaps=[];
     for(const id of live){const c=model(FX.get(id));if(!c)continue;const k=`${id}_${Math.floor(c.el/5)}`;
-      if(!SNAP.has(k)){const s={k,id,t:Date.now(),el:c.el,p:c.p,pc:c.pc,pd:c.pd,fair:c.fair,g0:(c.o.gh||0)+(c.o.ga||0),odds:ODDS[id]||null};SNAP.set(k,s);snaps.push(s)}}
+      if(!SNAP.has(k)){const s={k,id,t:Date.now(),el:c.el,p:c.p,pc:c.pc,pd:c.pd,p63:c.p63,fair:c.fair,g0:(c.o.gh||0)+(c.o.ga||0),odds:ODDS[id]||null};SNAP.set(k,s);snaps.push(s)}}
     await DB.put("snap",snaps);checkAlerts(live.concat(liveX.map(o=>o.id)));
     META.lastRefresh=Date.now();await saveMeta();pushCloud();
     const n2=live.concat(liveX.map(o=>o.id)).filter(id=>{const o=FX.get(id)||liveX.find(x=>x.id===id);return o&&o.st==="2H"}).length;
@@ -686,7 +689,7 @@ async function refreshApi(){
     buildStats();
     const snaps=[];
     for(const id of liveIds){const c=model(FX.get(id));if(!c)continue;const k=`${id}_${Math.floor(c.el/5)}`;
-      if(!SNAP.has(k)){const s={k,id,t:Date.now(),el:c.el,p:c.p,pc:c.pc,pd:c.pd,fair:c.fair,g0:(c.o.gh||0)+(c.o.ga||0),odds:ODDS[id]||null};SNAP.set(k,s);snaps.push(s)}}
+      if(!SNAP.has(k)){const s={k,id,t:Date.now(),el:c.el,p:c.p,pc:c.pc,pd:c.pd,p63:c.p63,fair:c.fair,g0:(c.o.gh||0)+(c.o.ga||0),odds:ODDS[id]||null};SNAP.set(k,s);snaps.push(s)}}
     checkAlerts(liveIds);
     await DB.put("snap",snaps);
     META.lastRefresh=Date.now();await saveMeta();pushCloud();
@@ -788,6 +791,18 @@ const tbtn=(t,big)=>`<button class="tn" data-team="${t.id}">${img(t.logo||teamLo
 const htLbl=o=>o.hth==null?(FIN.has(o.st)?"HT –":""):`HT ${o.hth}–${o.hta}`;
 const minLbl=o=>FIN.has(o.st)?o.st:o.st==="HT"?"HT":o.el?o.el+"'":o.st;
 function lateTag(o){const lt=lateOf(o);if(!lt||!lt.length)return"";const g=lt[0];return`<div class="ltag">Goal after 62:30 · ${g.m}'${g.x?"+"+g.x:""}${g.p?" "+esc(g.p):""}${lt.length>1?` +${lt.length-1} more`:""}</div>`}
+/* combined likelihood: goal chance and corner chance (corners weighted ×0.9) */
+const comb=c=>c.cm?(c.p+.9*c.cm.p)/1.9:c.p;
+/* what the model said at 62:30, rebuilt from the score and red cards at that minute */
+function retroP63(o){if(!o.goals||o.hth==null)return null;const m=S.late-1;
+  const live=[...SNAP.values()].filter(s=>s.id===o.id&&s.p63!=null&&s.el>=m-4&&s.el<=m).sort((a,b)=>b.el-a.el)[0];
+  if(live)return{p:live.p63,src:`live at ${live.el}′`};
+  const gh=o.goals.filter(g=>g.t===o.h.id&&g.m<=m).length,ga=o.goals.filter(g=>g.t!==o.h.id&&g.m<=m).length,g2=o.goals.some(g=>g.m>45&&g.m<=m);
+  const h=teamRate(o.lg,o.h.id),a=teamRate(o.lg,o.a.id),pre=(h.f+a.a)/2+(a.f+h.a)/2,reds=o.rd?o.rd.filter(r=>r.m<=m).length:0;
+  const d=Math.abs(gh-ga),sm=d===1?1.05:d>=2?.9:1,rm=reds?1.1:1,xx=Math.min(1,Math.max(0,(m-45)/50));
+  let p=1-Math.exp(-pre*(1-Math.pow(xx,1.15))*sm*rm);
+  if(!g2&&S.model!=="classic"){const E=empP(o.lg,m);if(E&&E.p>0&&E.p<1){const tf=Math.min(1.6,Math.max(.6,pre/lgAvg2H(o.lg)));p=1-Math.exp(Math.log(1-E.p)*tf*sm*rm)}}
+  return{p,src:`at ${gh}-${ga}`}}
 function kellyU(p,o){if(!o||o<=1)return 0;const f=(p*o-1)/(o-1);if(f<=0)return 0;return Math.min(S.maxStake/100,f*S.kelly/100)*S.bank}
 function evHtml(p,o){if(!o||!p)return"";const ev=o*p-1,st=kellyU(p,o);return`<span class="ev ${ev>0?"pos":"neg"}">EV ${ev>0?"+":""}${(ev*100).toFixed(1)}%${st>0?` · stake ${st.toFixed(1)}u`:""}</span>`}
 function cornBest(c){const cm=c.cm;if(!cm)return false;const og=ODDS[c.o.id],oc=ODDS["c"+c.o.id];
@@ -826,7 +841,7 @@ function renderLive(){
   <div class="sumline"><span><b class="n">${list.length}</b>in the 2nd half</span><span><b class="n">${cands.length}</b>in the window</span><span><b class="n">${other.length}</b>2H goal already in</span></div><p class="note" id="autoInfo" style="margin:-6px 0 12px">${autoText()}</p>`;
   if(!META.lastRefresh)h+=`<div class="card empty">Tap Refresh to load live matches.</div>`;
   else if(!cands.length)h+=`<div class="card empty">No second-half matches in the ${S.win0}–${S.win1}' window without a 2H goal right now.</div>`;
-  else for(const [lg,a] of lgGroups(cands,c=>c.o,c=>{const og=ODDS[c.o.id],oc=c.cm&&ODDS["c"+c.o.id];const ev=Math.max(og?og*c.p-1:-9,oc?oc*c.cm.p-1:-9);return ev>-9?10+ev:c.p}))h+=lgHead(lg,`${a.length} pick${a.length===1?"":"s"}`)+`<div class="grid">${a.map(candCard).join("")}</div>`;
+  else for(const [lg,a] of lgGroups(cands,c=>c.o,comb))h+=lgHead(lg,`${a.length} pick${a.length===1?"":"s"} · best combined ${pct(comb(a[0]))}`)+`<div class="grid">${a.map(candCard).join("")}</div>`;
   if(other.length){h+=`<h3 class="sec">2H goal already in</h3>`;for(const [lg,a] of lgGroups(other,o=>o,o=>o.el))h+=lgHead(lg)+`<div class="grid">${a.map(o=>miniCard(o)).join("")}</div>`}
   h+=todayHtml();
   box.innerHTML=h}
@@ -840,7 +855,7 @@ function todayHtml(){const t0=new Date();t0.setHours(0,0,0,0);
   return h}
 function resCard(o){const lt=lateOf(o),hit=lt&&lt.length,s=SM.first.get(o.id),won=s&&(o.gh+o.ga)>s.g0;
   const gl=(o.goals||[]).slice().sort((a,b)=>a.m-b.m||a.x-b.x).map(g=>`<span class="gm${g.m>=S.late?" lt":""}" title="${esc(g.p)}${g.t===o.h.id?" ("+esc(o.h.n)+")":g.t===o.a.id?" ("+esc(o.a.n)+")":""}">${g.m}'${g.x?"+"+g.x:""}</span>`).join("");
-  const vd=lt===null?`<div class="vd pend">Goal minutes pending</div>`:hit?`<div class="vd hit">✓ Met: goal ${LL()} (${lt.slice().sort((x,y)=>x.m-y.m).map(g=>g.m+"'").join(", ")})</div>`:`<div class="vd miss">✗ Not met: no goal ${LL()}</div>`;
+  const vd=lt===null?`<div class="vd pend">Goal minutes pending</div>`:hit?`<div class="vd hit">✓ Met: goal ${LL()} (${lt.slice().sort((x,y)=>x.m-y.m).map(g=>g.m+"'").join(", ")})</div>`:`<div class="vd miss">✗ Not met: no goal ${LL()}</div>${(()=>{const r=retroP63(o);return r?`<div class="m63">Model at 62:30: <b class="n">${pct(r.p)}</b> · fair ${(1/r.p).toFixed(2)} <span>(${r.src})</span></div>`:""})()}`;
   const pk=s?`<div class="vd ${won?"hit":"miss"}">Pick at ${s.el}' (${pct(s.p)}) ${won?"won":"lost"}${s.odds?` · odds ${s.odds}`:""}</div>`:"";
   const cor=o.ch!=null?`<div class="gms">Corners ${o.ch+o.ca} (${o.ch}–${o.ca})</div>`:"";
   return`<article class="mc${hit?" late":lt&&!hit?" nomet":""}"><div class="mh">${img(lgLogo(o.lg),"lgl")}<span>${new Date(o.ts).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})} kick-off</span><span class="min n ft">${o.st}</span></div>
@@ -926,7 +941,7 @@ function candCard(c){const o=c.o,id=o.id,cm=c.cm,ed=edgeFor(o,c.el),best=cornBes
   return`<article class="mc${best?" corn":""}" data-card="${id}"><div class="mh">${img(lgLogo(o.lg),"lgl")}<span>${LEAGUES[o.lg]}</span>${best?`<span class="bestc">Corners look better</span>`:""}<span class="min n">${minLbl(o)}</span></div>
   ${teamLines(o)}<div class="htl">HT ${o.hth??o.gh}–${o.hta??o.ga}${o.rd&&o.rd.length?` · <span style="color:var(--r)">${o.rd.length} red</span>`:""}</div>${tl(o)}
   <div class="nums"><div class="p"><span class="k">P(2H goal)</span><b class="n">${pct(c.p)}</b></div><div><span class="k">Fair odds</span><b class="n">${c.fair.toFixed(2)}</b></div><div><span class="k">Bet only if ≥</span><b class="n">${c.betIf.toFixed(2)}</b></div></div>
-  <div class="sub2">Goal ${LL()}: <b class="n">${pct(c.p63)}</b> · fair ${(1/c.p63).toFixed(2)}</div>
+  <div class="sub2">Goal ${LL()}: <b class="n">${pct(c.p63)}</b> · fair ${(1/c.p63).toFixed(2)}${c.cm?` · Combined: <b class="n">${pct(comb(c))}</b>`:""}</div>
   ${ed?`<div class="edge ${ed.l>0?"up":"dn"}">${ed.l>0?"▲":"▼"} ${esc(ed.lab)}: ${pct(ed.r)} had a goal ${LL()} (${ed.l>0?"+":""}${Math.round(ed.l*100)} pts, n ${ed.n})</div>`:""}
   <div class="odds"><label for="od${id}">Your odds</label><input class="inp n" id="od${id}" data-odds="${id}" inputmode="decimal" placeholder="${c.betIf.toFixed(2)}" value="${ODDS[id]||""}"><span id="ev${id}">${evHtml(c.p,ODDS[id])}</span>
     <button class="btn sm bet" data-bet="goal" data-id="${id}">${logged.includes("goal")?"Logged ✓":"I bet this"}</button></div>
@@ -955,7 +970,7 @@ function renderMatches(){
     const lt=lateOf(o),isL=lt&&lt.length,live=LIVEST.has(o.st);
     h+=`<div class="row${isL?" late":""}"><time class="n">${live?`<span class="live">${minLbl(o)}</span>`:d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}</time><span class="lgc" title="${LEAGUES[o.lg]}">${img(lgLogo(o.lg),"lgl")}</span>
     <div><div class="ln">${tbtn(o.h)}<b class="n">${o.gh??"-"}</b></div><div class="ln">${tbtn(o.a)}<b class="n">${o.ga??"-"}</b></div></div>
-    <div class="rx">${htLbl(o)}${isL?` · <span class="lt">late goal ${lt.map(g=>g.m+"'").join(", ")}</span>`:lt===null&&FIN.has(o.st)?" · minutes pending":""}${tl(o,true)}</div></div>`}
+    <div class="rx">${htLbl(o)}${isL?` · <span class="lt">late goal ${lt.map(g=>g.m+"'").join(", ")}</span>`:lt===null&&FIN.has(o.st)?" · minutes pending":lt&&FIN.has(o.st)?(()=>{const r=retroP63(o);return r?` · <span class="ms">missed · model ${pct(r.p)}</span>`:""})():""}${tl(o,true)}</div></div>`}
   if(arr.length>MP)h+=`<button class="btn more" id="mMore">Show more (${arr.length-MP} left)</button>`;
   $("mList").innerHTML=h}
 
