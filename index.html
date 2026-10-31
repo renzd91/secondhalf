@@ -224,6 +224,25 @@ table.st tr[data-ap]:hover td{background:var(--s2)}
 .drow .t i{position:absolute;inset:0 auto 0 0;background:var(--g);border-radius:5px}
 .drow .r{text-align:right}
 @media (max-width:620px){.drow{grid-template-columns:92px 44px 1fr}.drow .x{display:none}.hist span{font-size:10.5px}}
+.mc.corn{border-color:#ffd23f;background:linear-gradient(180deg,rgba(255,210,63,.13),transparent 70%),var(--s1);box-shadow:0 0 0 1px rgba(255,210,63,.5)}
+.bestc{font:700 12.5px var(--cond);color:#1d1600;background:#ffd23f;border-radius:6px;padding:2px 8px;margin-left:auto;letter-spacing:.02em}
+.bestc+.min{margin-left:8px}
+.mc.nomet{border-color:rgba(255,97,112,.6)}
+.mc.nomet::after{content:"";position:absolute;inset:0;border-radius:14px;pointer-events:none;
+  background:linear-gradient(to top right,transparent calc(50% - 3px),rgba(255,77,95,.8) calc(50% - 3px),rgba(255,77,95,.8) calc(50% + 3px),transparent calc(50% + 3px)),
+  linear-gradient(to top left,transparent calc(50% - 3px),rgba(255,77,95,.8) calc(50% - 3px),rgba(255,77,95,.8) calc(50% + 3px),transparent calc(50% + 3px))}
+.sub2{font-size:13px;color:#fff;margin-top:8px;text-shadow:var(--ts)}
+.edge{font-size:13px;font-weight:700;margin-top:8px;padding:6px 9px;border-radius:8px}
+.edge.up{color:var(--g);background:var(--gb)}.edge.dn{color:var(--r);background:var(--rb)}
+.cbox{margin-top:12px;padding-top:10px;border-top:1px dashed var(--ln)}
+.chd{font-size:13px;color:#fff;text-shadow:var(--ts)}
+.nums.c3{margin-top:8px;padding-top:0;border-top:0}
+.nums.c3 .p b{color:#ffd23f}
+.btn.bet{margin-left:auto}
+.rk{display:grid;grid-template-columns:1fr 70px 110px 70px 64px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--ln);font-size:14px;text-shadow:var(--ts)}
+.rk.hd{font:600 13px var(--cond);color:var(--m);border-top:0}
+.rk .r{text-align:right}.rk .up{color:var(--g)}.rk .dn{color:var(--r)}
+@media (max-width:620px){.rk{grid-template-columns:1fr 50px 90px 56px}.rk .x{display:none}}
 /* data */
 .fld{display:grid;gap:6px;margin-bottom:12px}
 .fld label{font-size:13.5px;color:var(--m)}
@@ -261,13 +280,14 @@ table.st tr[data-ap]:hover td{background:var(--s2)}
     <button class="btn pri" id="refresh">Refresh</button>
   </div>
   <nav class="tabs" aria-label="Sections">
-    <a href="#live" data-t="live">Live</a><a href="#archive" data-t="archive">Archive</a><a href="#matches" data-t="matches">Matches</a><a href="#teams" data-t="teams">Teams</a><a href="#insights" data-t="insights">Insights</a><a href="#data" data-t="data">Data</a>
+    <a href="#live" data-t="live">Live</a><a href="#edges" data-t="edges">Edges</a><a href="#archive" data-t="archive">Archive</a><a href="#matches" data-t="matches">Matches</a><a href="#teams" data-t="teams">Teams</a><a href="#insights" data-t="insights">Insights</a><a href="#data" data-t="data">Data</a>
   </nav>
 </div></header>
 
 <main class="wrap">
   <section class="tab" id="t-live"><div id="live"></div></section>
 
+  <section class="tab" id="t-edges"><div id="edg"></div></section>
   <section class="tab" id="t-archive"><div id="arc"></div></section>
 
   <section class="tab" id="t-matches">
@@ -315,12 +335,13 @@ import {initializeFirestore,doc,getDoc,setDoc,deleteDoc} from "https://www.gstat
 const FIREBASE={apiKey:"AIzaSyCu7gyOW-hnXtBoEh-SuSG77qwCEU1J7iU",authDomain:"rd-baby-ledger.firebaseapp.com",projectId:"rd-baby-ledger",storageBucket:"rd-baby-ledger.firebasestorage.app",messagingSenderId:"54646104292",appId:"1:54646104292:web:d21d3dd46e878ec5254cf1"};
 const fbApp=initializeApp(FIREBASE),auth=getAuth(fbApp),fdb=initializeFirestore(fbApp,{ignoreUndefinedProperties:true});
 /* ---------- constants ---------- */
-const LEAGUES={39:"Premier League",140:"LaLiga",141:"LaLiga HyperMotion",135:"Serie A",78:"Bundesliga",61:"Ligue 1"};
-const LEAGUE_2H={39:1.60,140:1.45,141:1.25,135:1.50,78:1.70,61:1.50};
+const LEAGUES={39:"Premier League",140:"LaLiga",135:"Serie A",78:"Bundesliga",61:"Ligue 1",40:"Championship",141:"LaLiga HyperMotion",136:"Serie B",79:"2. Bundesliga",62:"Ligue 2"};
+const LEAGUE_2H={39:1.60,140:1.45,141:1.25,135:1.50,78:1.70,61:1.50,40:1.45,136:1.30,79:1.60,62:1.35};
+const LEAGUE_C={39:10.3,140:9.4,141:9.6,135:9.7,78:9.3,61:9.4,40:10.4,136:9.6,79:9.6,62:9.6};
 const FIN=new Set(["FT","AET","PEN"]);
 const LIVEST=new Set(["1H","HT","2H","ET","BT","P","LIVE","INT","SUSP"]);
 const DAY=864e5,HIST=700;
-const DEF={win0:45,win1:75,edge:5,late:63,auto:0,rpm:10,catchup:1,reserve:10,minN:10,prior:5,maxStats:4,noIds:false,src:"mix",autoMode:"smart",smartEvery:3,xgTop:2,alerts:false,alertP:75,alertEv:true,model:"auto"};
+const DEF={win0:45,win1:75,edge:5,late:63,auto:0,rpm:10,catchup:1,reserve:10,minN:10,prior:5,maxStats:4,noIds:false,src:"mix",autoMode:"smart",smartEvery:3,xgTop:2,alerts:false,alertP:75,alertEv:true,model:"auto",cornT:70,bank:100,kelly:25,maxStake:3,minEdge:30};
 const isLimit=e=>/request limit|reached the limit|limit for the day/i.test(e&&e.message||"");
 const isIdsErr=e=>/ids parameter/i.test(e&&e.message||"");
 const BASE=(location.protocol.startsWith("http")&&!/^(localhost|127\.|\[::1\])/.test(location.hostname))?"/api/":"https://v3.football.api-sports.io/";
@@ -368,27 +389,29 @@ function saveUser(patch){if(!USER)return;Object.assign(userPatch,patch);clearTim
 function schedulePush(){if(!USER||pushT)return;pushT=setTimeout(()=>{pushT=0;pushCloud()},12000)}
 const slim=o=>{const c=Object.assign({},o);if(FIN.has(o.st))delete c.stats;return c};
 async function pushCloud(){
-  if(!USER||PUSHING)return;if(!DIRTY.size&&!SNAPDIRTY)return;PUSHING=true;
+  if(!USER||PUSHING)return;if(!DIRTY.size&&!SNAPDIRTY&&!BETSDIRTY)return;PUSHING=true;const betsNow=BETSDIRTY;BETSDIRTY=false;
   const ids=[...DIRTY];DIRTY.clear();const snapNow=SNAPDIRTY;SNAPDIRTY=false;const now=Date.now(),mf={};
   try{
     for(const id of ids){const [lg,se]=id.split("_").map(Number);
       await setDoc(cref(id),{fx:[...FX.values()].filter(o=>o.lg===lg&&o.season===se).map(slim),u:now});mf[id]=now;CHU[id]=now}
     if(snapNow){const arr=[...SNAP.values()].sort((a,b)=>b.t-a.t).slice(0,3000);await setDoc(cref("snaps"),{snaps:arr,u:now});mf.snaps=now;CHU.snaps=now}
+    if(betsNow){await setDoc(cref("bets"),{bets:[...BETS.values()],u:now});mf.bets=now;CHU.bets=now}
     await setDoc(uref(),{manifest:mf},{merge:true});await DB.kset("chunkU",CHU);
-  }catch(e){ids.forEach(i=>DIRTY.add(i));if(snapNow)SNAPDIRTY=true;toast("Cloud sync failed, will retry: "+e.message);schedulePush()}
-  finally{PUSHING=false;if(DIRTY.size||SNAPDIRTY)schedulePush()}}
+  }catch(e){ids.forEach(i=>DIRTY.add(i));if(snapNow)SNAPDIRTY=true;if(betsNow)BETSDIRTY=true;toast("Cloud sync failed, will retry: "+e.message);schedulePush()}
+  finally{PUSHING=false;if(DIRTY.size||SNAPDIRTY||BETSDIRTY)schedulePush()}}
 const better=(o,p)=>!p||(o.evFin&&!p.evFin)||(FIN.has(o.st)&&!FIN.has(p.st))||((o.evFin===p.evFin)&&(FIN.has(o.st)===FIN.has(p.st))&&(o.upd||0)>(p.upd||0));
 async function pullCloud(ud){
   const mf=ud.manifest||{},got=[];let n=0;
   for(const [id,u] of Object.entries(mf)){if((CHU[id]||0)>=u)continue;status(`Syncing from your account… ${++n}`);
     const d=await getDoc(cref(id));if(!d.exists())continue;const x=d.data();
-    if(id==="snaps"){(x.snaps||[]).forEach(s=>{if(!SNAP.has(s.k))SNAP.set(s.k,s)});await DB.put("snap",[...SNAP.values()],true)}
+    if(id==="bets"){(x.bets||[]).forEach(b=>{if(!BETS.has(b.k))BETS.set(b.k,b)});await DB.kset("bets",[...BETS.values()])}
+    else if(id==="snaps"){(x.snaps||[]).forEach(s=>{if(!SNAP.has(s.k))SNAP.set(s.k,s)});await DB.put("snap",[...SNAP.values()],true)}
     else{(x.fx||[]).forEach(o=>{if(better(o,FX.get(o.id))){FX.set(o.id,o);got.push(o)}})}
     CHU[id]=u}
   await DB.put("fx",got,true);await DB.kset("chunkU",CHU);
   const local=new Set([...FX.values()].map(chunkId));for(const id of local)if(!mf[id])DIRTY.add(id);
-  if(SNAP.size&&!mf.snaps)SNAPDIRTY=true;
-  if(DIRTY.size||SNAPDIRTY)pushCloud()}
+  if(SNAP.size&&!mf.snaps)SNAPDIRTY=true;if(BETS.size&&!mf.bets)BETSDIRTY=true;
+  if(DIRTY.size||SNAPDIRTY||BETSDIRTY)pushCloud()}
 
 /* ---------- API ---------- */
 const RL={t:[],async wait(){for(;;){const now=Date.now();RL.t=RL.t.filter(x=>now-x<60000);if(RL.t.length<Math.max(1,S.rpm-1))break;
@@ -412,10 +435,11 @@ const utcDay=off=>new Date(Date.now()+off*DAY).toISOString().slice(0,10);
 const curSeason=()=>{const d=new Date();return d.getUTCMonth()>=6?d.getUTCFullYear():d.getUTCFullYear()-1};
 
 /* ---------- fixtures ---------- */
-function parseStats(arr){let xg=0,sot=0,reds=0,haveXg=true;
+function parseStats(arr){let xg=0,sot=0,reds=0,haveXg=true;const cor={};
   for(const t of arr){const g=k=>{const s=(t.statistics||[]).find(x=>x.type===k);return s?s.value:null};
-    const x=g("expected_goals");if(x==null)haveXg=false;else xg+=parseFloat(x)||0;sot+=Number(g("Shots on Goal"))||0;reds+=Number(g("Red Cards"))||0}
-  return{xg,sot,reds,haveXg:haveXg&&arr.length>0}}
+    const x=g("expected_goals");if(x==null)haveXg=false;else xg+=parseFloat(x)||0;sot+=Number(g("Shots on Goal"))||0;reds+=Number(g("Red Cards"))||0;
+    const ck=g("Corner Kicks");if(t.team&&t.team.id!=null&&ck!=null)cor[t.team.id]=Number(ck)||0}
+  return{xg,sot,reds,haveXg:haveXg&&arr.length>0,cor}}
 function normFx(f,prev,useEv){
   const st=f.fixture.status||{},ht=(f.score&&f.score.halftime)||{};
   const o={id:f.fixture.id,ts:(f.fixture.timestamp||0)*1000,lg:f.league.id,season:f.league.season,
@@ -424,8 +448,11 @@ function normFx(f,prev,useEv){
     upd:Date.now(),goals:prev?prev.goals:null,evFin:prev?!!prev.evFin:false,evTry:prev?prev.evTry||0:0,stats:prev?prev.stats:null};
   if(useEv&&Array.isArray(f.events)){
     o.goals=f.events.filter(e=>e.type==="Goal"&&e.detail!=="Missed Penalty").map(e=>({m:(e.time&&e.time.elapsed)||0,x:(e.time&&e.time.extra)||0,t:e.team?e.team.id:0,p:(e.player&&e.player.name)||"",d:e.detail||""}));
-    o.evFin=FIN.has(o.st)&&o.goals.length===(o.gh||0)+(o.ga||0)}
-  if(useEv&&Array.isArray(f.statistics)&&f.statistics.length)o.stats=parseStats(f.statistics);
+    o.evFin=FIN.has(o.st)&&o.goals.length===(o.gh||0)+(o.ga||0);
+    o.rd=f.events.filter(e=>e.type==="Card"&&/red|second yellow/i.test(e.detail||"")).map(e=>({m:(e.time&&e.time.elapsed)||0,t:e.team?e.team.id:0}))}
+  else if(prev&&prev.rd)o.rd=prev.rd;
+  if(prev){if(prev.ch!=null){o.ch=prev.ch;o.ca=prev.ca}if(prev.cTry)o.cTry=prev.cTry}
+  if(useEv&&Array.isArray(f.statistics)&&f.statistics.length){o.stats=parseStats(f.statistics);const c=o.stats.cor;if(c&&c[o.h.id]!=null&&c[o.a.id]!=null){o.ch=c[o.h.id];o.ca=c[o.a.id]}}
   if(o.hth==null&&prev&&prev.hth!=null){o.hth=prev.hth;o.hta=prev.hta}
   if(o.hth==null&&o.st==="HT"){o.hth=o.gh;o.hta=o.ga}
   return o}
@@ -435,30 +462,73 @@ function upsert(list,f,useEv){if(!LEAGUES[f.league.id])return null;const o=normF
 /* ---------- stats ---------- */
 const band=m=>m<=15?0:m<=30?1:m<=45?2:m<=60?3:m<=75?4:5;
 function agg(G,tid){const n=G.length,A={n};if(!n)return A;
-  let w=0,d=0,l=0,gf=0,ga=0,s2=0,sc=0,cs=0,btts=0,o25=0,n2=0,m2=0,t2=0,f2s=0,a2s=0,nev=0,late=0,lateF=0;
+  let w=0,d=0,l=0,gf=0,ga=0,s2=0,sc=0,cs=0,btts=0,o25=0,n2=0,m2=0,t2=0,f2s=0,a2s=0,nev=0,late=0,lateF=0,nc=0,cfs=0,cas=0;
   const bf=[0,0,0,0,0,0],ba=[0,0,0,0,0,0];
   for(const g of G){gf+=g.gf;ga+=g.ga;if(g.gf>g.ga)w++;else if(g.gf<g.ga)l++;else d++;
     if(g.gf>=2)s2++;if(g.gf>0)sc++;if(g.ga===0)cs++;if(g.gf>0&&g.ga>0)btts++;if(g.gf+g.ga>2)o25++;
+    if(g.cf!=null){nc++;cfs+=g.cf;cas+=g.cA}
     if(g.f2!=null){n2++;if(g.f2+g.a2>0)m2++;if(g.f2>0)t2++;f2s+=g.f2;a2s+=g.a2}
     if(g.late!=null){nev++;if(g.late)late++;if(g.lateF)lateF++;
       if(tid!=null)for(const x of g.o.goals){(x.t===tid?bf:ba)[band(x.m)]++}}}
   const r=(a,b)=>b?a/b:null;
-  Object.assign(A,{w,d,l,gf,ga,gfA:gf/n,gaA:ga/n,n2,nev,f2s,a2s,bf,ba,
+  Object.assign(A,{w,d,l,gf,ga,gfA:gf/n,gaA:ga/n,n2,nev,f2s,a2s,bf,ba,nc,cfs,cas,
     p2:r(s2,n),sc:r(sc,n),cs:r(cs,n),btts:r(btts,n),o25:r(o25,n),m2:r(m2,n2),t2:r(t2,n2),late:r(late,nev),lateF:r(lateF,nev)});
   return A}
 function buildStats(){
   const cut=Date.now()-HIST*DAY,T=new Map(),L={},all=[];
   const arr=[...FX.values()].filter(o=>FIN.has(o.st)&&o.ts>=cut&&o.gh!=null).sort((a,b)=>b.ts-a.ts);
   for(const o of arr){
-    const l=L[o.lg]||(L[o.lg]={n:0,n2:0,g2:0,nev:0,late:0,g:0});l.n++;l.g+=o.gh+o.ga;
+    const l=L[o.lg]||(L[o.lg]={n:0,n2:0,g2:0,nev:0,late:0,g:0,nc:0,cs:0});l.n++;l.g+=o.gh+o.ga;if(o.ch!=null){l.nc++;l.cs+=o.ch+o.ca}
     const has2=o.hth!=null&&o.hta!=null;if(has2){l.n2++;l.g2+=o.gh+o.ga-o.hth-o.hta}
     const lt=lateOf(o);if(lt){l.nev++;if(lt.length)l.late++}
     for(const home of [true,false]){const tm=home?o.h:o.a;let s=T.get(tm.id);if(!s){s={id:tm.id,name:tm.n,lgc:{},G:[]};T.set(tm.id,s)}
       s.lgc[o.lg]=(s.lgc[o.lg]||0)+1;const gf=home?o.gh:o.ga,ga=home?o.ga:o.gh;
-      const g={o,home,gf,ga,f2:has2?gf-(home?o.hth:o.hta):null,a2:has2?ga-(home?o.hta:o.hth):null,late:lt?lt.length>0:null,lateF:lt?lt.some(x=>x.t===tm.id):null};
+      const g={o,home,gf,ga,cf:o.ch==null?null:(home?o.ch:o.ca),cA:o.ch==null?null:(home?o.ca:o.ch),f2:has2?gf-(home?o.hth:o.hta):null,a2:has2?ga-(home?o.hta:o.hth):null,late:lt?lt.length>0:null,lateF:lt?lt.some(x=>x.t===tm.id):null};
       s.G.push(g);all.push(g)}}
   for(const s of T.values()){s.lg=s.G[0].o.lg;s.A=agg(s.G,s.id)}
-  TS=T;LGS=L;BASEA=agg(all,null);buildCurves(arr)}
+  TS=T;LGS=L;BASEA=agg(all,null);buildCurves(arr);EDGE=buildEdges(arr)}
+const lgCorn=lg=>{const l=LGS[lg];return l&&l.nc>=60?l.cs/l.nc:(LEAGUE_C[lg]||9.8)};
+function teamCorn(lg,tid){const avg=lgCorn(lg)/2,s=TS.get(tid),k=6;if(!s||!s.A.nc)return{f:avg,a:avg,n:0};return{f:(s.A.cfs+k*avg)/(s.A.nc+k),a:(s.A.cas+k*avg)/(s.A.nc+k),n:s.A.nc}}
+function nbTail(lam,k,r){if(k<=0)return 1;const q=r/(r+lam);let pm=Math.pow(q,r),c=pm;for(let i=0;i<k-1;i++){pm=pm*(i+r)/(i+1)*(1-q);c+=pm}return Math.max(0,1-c)}
+function curCorners(o){if(o.ch!=null&&o.ca!=null)return[o.ch,o.ca];const c=o.stats&&o.stats.cor;if(c&&c[o.h.id]!=null&&c[o.a.id]!=null)return[c[o.h.id],c[o.a.id]];return null}
+function cornerModel(o,el){const cc=curCorners(o);if(!cc)return null;
+  const h=teamCorn(o.lg,o.h.id),a=teamCorn(o.lg,o.a.id),E=(h.f+a.a)/2+(a.f+h.a)/2,C=cc[0]+cc[1];
+  const so=E*Math.min(1,el/94),ratio=Math.min(1.6,Math.max(.6,(C+1)/(so+1))),w=Math.min(.6,el/150),mult=(1-w)+w*ratio;
+  const diff=Math.abs((o.gh||0)-(o.ga||0)),sm=diff===1?1.08:diff>=2?.9:1,lam=E*Math.max(0,94-el)/94*1.06*mult*sm;
+  let k=1;while(nbTail(lam,k+1,8)>=S.cornT/100&&k<15)k++;const pk=nbTail(lam,k,8);if(pk<.5)return null;
+  return{lam,C,ch:cc[0],ca:cc[1],k,line:C+k-.5,p:pk,fair:1/pk,betIf:(1/pk)*(1+S.edge/100),E,hn:h.n,an:a.n}}
+/* ---------- edges: hit rate of "goal after 62:30" by match situation at 62' ---------- */
+let EDGE={single:new Map(),pair:new Map(),lab:{},base:null,n:0};
+function favOf(o,ex){const a=TS.get(o.h.id),b=TS.get(o.a.id);if(!a||!b||a.A.n<8||b.A.n<8)return 0;
+  const gd=(s,gf,ga)=>ex?((s.A.gf-gf)-(s.A.ga-ga))/(s.A.n-1):(s.A.gf-s.A.ga)/s.A.n;
+  const d=(gd(a,o.gh||0,o.ga||0)+.25)-gd(b,o.ga||0,o.gh||0);return d>.35?1:d<-.35?-1:0}
+function condsOf(o,gh,ga,reds,g2,ex){const out=[],tot=gh+ga,diff=gh-ga,ad=Math.abs(diff);
+  out.push(["gs"+Math.min(tot,3),`${tot>=3?"3+":tot} goal${tot===1?"":"s"} so far`]);
+  out.push(["mg"+(ad===0?(tot?"d":"0"):ad===1?"1":"2"),ad===0?(tot?"Level with goals":"Goalless"):ad===1?"One-goal game":"Two+ goal margin"]);
+  const fv=favOf(o,ex),fs=fv===0?"even":fv*diff>0?"ahead":fv*diff<0?"behind":"level";
+  out.push(["fv"+fs,{even:"Evenly matched",ahead:"Favourite ahead",behind:"Favourite behind",level:"Favourite level"}[fs]]);
+  if(reds!=null)out.push(["rd"+(reds?1:0),reds?"Red card shown":"No red card"]);
+  out.push(["h2"+(g2?1:0),g2?"2H goal already in":"No 2H goal yet"]);
+  const A=TS.get(o.h.id),B=TS.get(o.a.id),bl=BASEA&&BASEA.late;
+  if(A&&B&&bl!=null&&A.A.late!=null&&B.A.late!=null&&A.A.nev>=8&&B.A.nev>=8){const hl=ex&&o.goals?(o.goals.some(g=>g.m>=S.late)?1:0):0,lr=s=>ex?(s.A.late*s.A.nev-hl)/(s.A.nev-1):s.A.late;const m=(lr(A)+lr(B))/2;if(m>=bl+.05)out.push(["lt1","Late-goal teams"]);else if(m<=bl-.05)out.push(["lt0","Few late goals teams"])}
+  out.push(["lg"+o.lg,LEAGUES[o.lg]]);return out}
+function histConds(o){const m=S.late-1;
+  const gh=o.goals.filter(g=>g.t===o.h.id&&g.m<=m).length,ga=o.goals.filter(g=>g.t!==o.h.id&&g.m<=m).length;
+  const reds=o.rd?o.rd.filter(r=>r.m<=m).length:null,g2=o.goals.some(g=>g.m>45&&g.m<=m);return condsOf(o,gh,ga,reds,g2,true)}
+function buildEdges(arr,lgF){const single=new Map(),pair=new Map(),lab={};let n=0,hit=0;
+  for(const o of arr){if(!o.evFin||!o.goals||(lgF&&o.lg!=lgF))continue;const hh=o.goals.some(g=>g.m>=S.late);n++;if(hh)hit++;
+    const cs=histConds(o);for(const [k,l] of cs){lab[k]=l;const s=single.get(k)||{n:0,h:0};s.n++;if(hh)s.h++;single.set(k,s)}
+    for(let i=0;i<cs.length;i++)for(let j=i+1;j<cs.length;j++){if(lgF&&(cs[i][0].slice(0,2)==="lg"||cs[j][0].slice(0,2)==="lg"))continue;const k=cs[i][0]+"|"+cs[j][0];const s=pair.get(k)||{n:0,h:0};s.n++;if(hh)s.h++;pair.set(k,s)}}
+  return{single,pair,lab,base:n?hit/n:null,n}}
+const edgeLab=k=>k.split("|").map(x=>EDGE.lab[x]||x).join(" + ");
+function edgeFor(o,el){if(!EDGE.base)return null;const m=Math.min(el,S.late-1);
+  const gh=(o.goals||[]).filter(g=>g.t===o.h.id&&g.m<=m).length,ga=(o.goals||[]).filter(g=>g.t!==o.h.id&&g.m<=m).length;
+  const reds=o.rd?o.rd.length:(o.stats&&o.stats.reds)||0,g2=(o.goals||[]).some(g=>g.m>45);
+  const cs=condsOf(o,o.goals?gh:(o.gh||0),o.goals?ga:(o.ga||0),reds,g2).map(c=>c[0]);let best=null,worst=null;
+  const look=(k,s)=>{if(!s||s.n<S.minEdge)return;const r=s.h/s.n,l=r-EDGE.base,x={k,lab:edgeLab(k),r,n:s.n,l};if(!best||l>best.l)best=x;if(!worst||l<worst.l)worst=x};
+  for(const k of cs)look(k,EDGE.single.get(k));
+  for(let i=0;i<cs.length;i++)for(let j=i+1;j<cs.length;j++){const k=cs[i]+"|"+cs[j];look(k,EDGE.pair.get(k)||EDGE.pair.get(cs[j]+"|"+cs[i]))}
+  if(best&&best.l>=.03)return best;if(worst&&worst.l<=-.05)return worst;return null}
 /* empirical chance of another goal after minute m, given no 2H goal by m */
 let CURVE={};
 function buildCurves(arr){const C={};
@@ -481,15 +551,15 @@ function model(o){
   if(st){reds=st.reds;const threat=st.haveXg?st.xg:st.sot*.3,exp=(pre/.55)*(Math.max(el,1)/95),ratio=Math.min(1.6,Math.max(.6,threat/exp)),w=Math.min(.5,el/180);
     mult=(1-w)+w*ratio;note=st.haveXg?`xG ${st.xg.toFixed(2)}`:`${st.sot} shots on target`}
   const x=Math.min(1,Math.max(0,(el-45)/50)),rem=1-Math.pow(x,1.15),diff=Math.abs(gh-ga),sm=diff===1?1.05:diff>=2?.9:1,rm=reds>0?1.1:1;
-  const pc=1-Math.exp(-pre*rem*mult*sm*rm);let pd=null,en=0;
-  const E=S.model==="classic"?null:empP(o.lg,el);
-  if(E&&E.p>0&&E.p<1){const tf=Math.min(1.6,Math.max(.6,pre/lgAvg2H(o.lg)));pd=1-Math.exp(Math.log(1-E.p)*tf*mult*sm*rm);en=E.n||E.na}
-  const p=pd!=null?pd:pc,fair=1/p;
-  return{o,el,pre,note,reds,p,pc,pd,en,mt:pd!=null?"data":"classic",fair,betIf:fair*(1+S.edge/100),hn:h.n,an:a.n}}
+  const classicAt=m=>{const xx=Math.min(1,Math.max(0,(m-45)/50));return 1-Math.exp(-pre*(1-Math.pow(xx,1.15))*mult*sm*rm)};
+  const dataAt=m=>{const E=S.model==="classic"?null:empP(o.lg,m);if(!E||!(E.p>0&&E.p<1))return null;const tf=Math.min(1.6,Math.max(.6,pre/lgAvg2H(o.lg)));return{p:1-Math.exp(Math.log(1-E.p)*tf*mult*sm*rm),n:E.n||E.na}};
+  const pc=classicAt(el),D=dataAt(el),pd=D?D.p:null,en=D?D.n:0,p=pd!=null?pd:pc,fair=1/p;
+  const m63=S.late-1,p63=el>=m63?p:((dataAt(m63)||{}).p??classicAt(m63));
+  return{o,el,pre,note,reds,p,pc,pd,en,p63,cm:cornerModel(o,el),mt:pd!=null?"data":"classic",fair,betIf:fair*(1+S.edge/100),hn:h.n,an:a.n}}
 
 /* ---------- refresh ---------- */
 /* ---------- ESPN fallback (free, no key, unofficial) ---------- */
-const ESPN={39:"eng.1",140:"esp.1",141:"esp.2",135:"ita.1",78:"ger.1",61:"fra.1"};
+const ESPN={39:"eng.1",140:"esp.1",141:"esp.2",135:"ita.1",78:"ger.1",61:"fra.1",40:"eng.2",136:"ita.2",79:"ger.2",62:"fra.2"};
 const EBASE=BASE.startsWith("/")?"/espn/":"https://site.api.espn.com/";
 let LIVEX=[],TODAYX=[];
 const STOPW=new Set(["fc","cf","ac","as","sc","ss","afc","club","de","la","el","the","calcio","cd","ud","sd","rcd","ca","sv","tsg","vfb","vfl","fsv","rc","ogc","stade","olympique","us","hotspur","and","1","04","05","1899","1909","1846","1900","1910","1913"]);
@@ -511,23 +581,29 @@ function espnFx(ev,lg){const c=(ev.competitions||[])[0];if(!c||!c.competitors)re
     const side=String(d.team&&d.team.id)===hid?"h":"a";return{m:parseInt(dv)||Math.floor(((d.clock&&d.clock.value)||0)/60),x:x?+x[1]:0,side,t:side==="h"?h.id:a.id,p:((d.athletesInvolved||[])[0]||{}).displayName||"",d:d.ownGoal?"Own Goal":d.penaltyKick?"Penalty":"Normal Goal"}});
   let sot=0,hs=false;for(const t of [H,A])for(const x of (t.statistics||[]))if(/shotsOnTarget|shotsOnGoal/i.test(x.name||"")){sot+=parseFloat(x.displayValue)||0;hs=true}
   const reds=(c.details||[]).filter(d=>d.redCard).length,gh=parseInt(H.score)||0,ga=parseInt(A.score)||0;
+  const corn=t=>{const x=(t.statistics||[]).find(s=>/wonCorners|cornerKicks|^corners$/i.test(s.name||""));return x?parseFloat(x.displayValue)||0:null};
+  const ech=corn(H),eca=corn(A);
+  const rd=(c.details||[]).filter(d=>d.redCard).map(d=>({m:parseInt(String((d.clock&&d.clock.displayValue)||""))||0,side:String(d.team&&d.team.id)===hid?"h":"a"}));
   const half=s==="1H"||s==="NS",fh=goals.filter(g=>g.m<=45);
   return{id:-Number(ev.id),src:"espn",ts:Date.parse(ev.date||c.date)||Date.now(),lg,season:curSeason(),h,a,st:s,el:s==="HT"?45:(parseInt(st.displayClock)||Math.floor((st.clock||0)/60)),
-    gh,ga,hth:half?null:fh.filter(g=>g.side==="h").length,hta:half?null:fh.filter(g=>g.side==="a").length,goals,evFin:s==="FT",stats:hs?{xg:0,sot,reds,haveXg:false}:null}}
+    gh,ga,hth:half?null:fh.filter(g=>g.side==="h").length,hta:half?null:fh.filter(g=>g.side==="a").length,goals,evFin:s==="FT",ch:ech,ca:ech==null?null:eca,rd,stats:hs?{xg:0,sot,reds,haveXg:false}:null}}
 function matchFx(e,pool){let best=null,bs=0;
   for(const o of pool){if(o.lg!==e.lg||!FIN.has(o.st)||Math.abs(o.ts-e.ts)>6*3600e3||o.gh!==e.gh||o.ga!==e.ga)continue;
     const v=nameSim(o.h.n,e.h.n)+nameSim(o.a.n,e.a.n)+(o.h.id===e.h.id?1:0)+(o.a.id===e.a.id?1:0);if(v>bs){bs=v;best=o}}
   return bs>=.8?best:null}
-function fillFrom(e,o){if(o.evFin||e.goals.length!==(o.gh||0)+(o.ga||0))return false;
-  o.goals=e.goals.map(g=>({m:g.m,x:g.x,t:g.side==="h"?o.h.id:o.a.id,p:g.p,d:g.d}));o.evFin=true;o.upd=Date.now();
-  if(o.hth==null&&e.hth!=null){o.hth=e.hth;o.hta=e.hta}return true}
+function fillFrom(e,o){let ch=false;
+  if(!o.evFin&&e.goals.length===(o.gh||0)+(o.ga||0)){o.goals=e.goals.map(g=>({m:g.m,x:g.x,t:g.side==="h"?o.h.id:o.a.id,p:g.p,d:g.d}));o.evFin=true;ch=true;
+    if(o.hth==null&&e.hth!=null){o.hth=e.hth;o.hta=e.hta}}
+  if(o.ch==null&&e.ch!=null){o.ch=e.ch;o.ca=e.ca;ch=true}
+  if(o.rd==null&&e.rd&&o.evFin){o.rd=e.rd.map(r=>({m:r.m,t:r.side==="h"?o.h.id:o.a.id}));ch=true}
+  if(ch)o.upd=Date.now();return ch}
 function matchSched(e,sched){let best=null,bs=0;
   for(const s of sched){if(s.lg!==e.lg||Math.abs(s.ts-e.ts)>3*3600e3)continue;const v=nameSim(s.h.n,e.h.n)+nameSim(s.a.n,e.a.n);if(v>bs){bs=v;best=s}}return bs>=1?best:null}
 function fromEspn(e,s){const prev=FX.get(s.id);if(prev&&FIN.has(prev.st)&&prev.evFin)return null;
   const goals=e.goals.map(g=>({m:g.m,x:g.x,t:g.side==="h"?s.h.id:s.a.id,p:g.p,d:g.d}));
   const keepHt=prev&&prev.hth!=null&&(FIN.has(prev.st)||prev.st==="2H");
   return{id:s.id,ts:s.ts,lg:s.lg,season:s.season,h:s.h,a:s.a,st:e.st,el:e.el,gh:e.gh,ga:e.ga,hth:keepHt?prev.hth:e.hth,hta:keepHt?prev.hta:e.hta,
-    goals,evFin:e.st==="FT"&&goals.length===e.gh+e.ga,evTry:prev?prev.evTry||0:0,stats:e.stats||(prev&&LIVEST.has(prev.st)?prev.stats:null),upd:Date.now(),src:"espn"}}
+    goals,evFin:e.st==="FT"&&goals.length===e.gh+e.ga,evTry:prev?prev.evTry||0:0,ch:e.ch!=null?e.ch:(prev?prev.ch:null),ca:e.ch!=null?e.ca:(prev?prev.ca:null),rd:(e.rd||[]).map(r=>({m:r.m,t:r.side==="h"?s.h.id:s.a.id})),stats:e.stats||(prev&&LIVEST.has(prev.st)?prev.stats:null),upd:Date.now(),src:"espn"}}
 const quotaOk=()=>KEY()&&!(QUOTA.left!=null&&QUOTA.day===utcDay(0)&&QUOTA.left<=1);
 const markLimit=()=>{QUOTA={left:0,limit:QUOTA.limit,day:utcDay(0)};ls.set("sh_quota",QUOTA);renderQuota()};
 async function refreshHybrid(useApi){
@@ -567,11 +643,12 @@ async function refreshHybrid(useApi){
   finally{BUSY=false;b.disabled=false;b.textContent="Refresh";renderAll()}}
 async function espnFill(cutTs,outChanged,prog){
   const et=ts=>new Date(ts).toLocaleDateString("en-CA",{timeZone:"America/New_York"}).replace(/-/g,"");
-  const q=[...FX.values()].filter(o=>FIN.has(o.st)&&!o.evFin&&o.ts>=cutTs),G=new Map();
+  const q=[...FX.values()].filter(o=>FIN.has(o.st)&&(!o.evFin||o.ch==null)&&(o.cTry||0)<2&&o.ts>=cutTs),G=new Map();
   for(const o of q){const k=o.lg+"|"+et(o.ts);if(!G.has(k))G.set(k,[]);G.get(k).push(o)}
   const keys=[...G.keys()].sort().reverse();let i=0,filled=0;
   for(const k of keys){if(STOP&&prog)break;i++;const [lg,d]=k.split("|"),grp=G.get(k),ch=[];
-    try{for(const ev of await espnBoard(+lg,d)){const e=espnFx(ev,+lg);if(!e||e.st!=="FT")continue;const o=matchFx(e,grp);if(o&&fillFrom(e,o)){ch.push(o);filled++}}}catch(err){if(prog)bfLog(`ESPN ${LEAGUES[lg]} ${d}: ${err.message}`)}
+    let okCall=false;try{for(const ev of await espnBoard(+lg,d)){const e=espnFx(ev,+lg);if(!e||e.st!=="FT")continue;const o=matchFx(e,grp);if(o&&fillFrom(e,o)){ch.push(o);filled++}}okCall=true}catch(err){if(prog)bfLog(`ESPN ${LEAGUES[lg]} ${d}: ${err.message}`)}
+    if(okCall)for(const o of grp)if(!ch.includes(o)&&(!o.evFin||o.ch==null)){o.cTry=(o.cTry||0)+1;ch.push(o)}
     if(outChanged)outChanged.push(...ch);else await DB.put("fx",ch);
     if(prog){prog(i,keys.length,filled);await sleep(350)}}
   return{filled,total:q.length}}
@@ -711,6 +788,21 @@ const tbtn=(t,big)=>`<button class="tn" data-team="${t.id}">${img(t.logo||teamLo
 const htLbl=o=>o.hth==null?(FIN.has(o.st)?"HT –":""):`HT ${o.hth}–${o.hta}`;
 const minLbl=o=>FIN.has(o.st)?o.st:o.st==="HT"?"HT":o.el?o.el+"'":o.st;
 function lateTag(o){const lt=lateOf(o);if(!lt||!lt.length)return"";const g=lt[0];return`<div class="ltag">Goal after 62:30 · ${g.m}'${g.x?"+"+g.x:""}${g.p?" "+esc(g.p):""}${lt.length>1?` +${lt.length-1} more`:""}</div>`}
+function kellyU(p,o){if(!o||o<=1)return 0;const f=(p*o-1)/(o-1);if(f<=0)return 0;return Math.min(S.maxStake/100,f*S.kelly/100)*S.bank}
+function evHtml(p,o){if(!o||!p)return"";const ev=o*p-1,st=kellyU(p,o);return`<span class="ev ${ev>0?"pos":"neg"}">EV ${ev>0?"+":""}${(ev*100).toFixed(1)}%${st>0?` · stake ${st.toFixed(1)}u`:""}</span>`}
+function cornBest(c){const cm=c.cm;if(!cm)return false;const og=ODDS[c.o.id],oc=ODDS["c"+c.o.id];
+  if(og&&oc)return oc*cm.p-1>og*c.p-1&&oc*cm.p-1>0;if(oc)return oc*cm.p-1>0&&!og;if(og)return false;return cm.p>=c.p+.05}
+let BETS=new Map(),BETSDIRTY=false;
+const saveBets=()=>{DB.kset("bets",[...BETS.values()]);BETSDIRTY=true;schedulePush()};
+function betResult(b){const o=FX.get(b.id);if(!o||!FIN.has(o.st))return null;
+  if(b.mkt==="corner"){if(o.ch==null)return null;return o.ch+o.ca>b.line}return(o.gh+o.ga)>b.g0}
+function placeBet(id,mkt){const c=LASTC.get(id);if(!c)return;const o=c.o,odds=ODDS[mkt==="corner"?"c"+id:id];if(!odds){toast("Enter the odds you took first.");return}
+  const p=mkt==="corner"?c.cm.p:c.p,st=kellyU(p,odds)||1,k=`${id}_${mkt}_${Date.now()}`;
+  const conds=condsOf(o,o.gh||0,o.ga||0,o.rd?o.rd.length:(o.stats&&o.stats.reds)||0,(o.goals||[]).some(g=>g.m>45)).map(x=>x[0]);
+  BETS.set(k,{k,id,mkt,odds,p,stake:+st.toFixed(2),el:c.el,t:Date.now(),g0:(o.gh||0)+(o.ga||0),line:mkt==="corner"?c.cm.line:null,lg:o.lg,nm:`${o.h.n} v ${o.a.n}`,conds});
+  saveBets();toast(`Logged: ${mkt==="corner"?`Over ${c.cm.line} corners`:"2H goal"} @ ${odds}, ${st.toFixed(1)}u`);renderLive()}
+function markBest(c){const card=document.querySelector(`[data-card="${c.o.id}"]`);if(!card)return;const b=cornBest(c);card.classList.toggle("corn",b);
+  let t=card.querySelector(".bestc");if(b&&!t){card.querySelector(".mh .min").insertAdjacentHTML("beforebegin",'<span class="bestc">Corners look better</span>')}else if(!b&&t)t.remove()}
 function evChip(id,c){const od=ODDS[id];if(!od||!c)return"";const ev=od*c.p-1;return`<span class="ev ${ev>0?"pos":"neg"}">EV ${ev>0?"+":""}${(ev*100).toFixed(1)}%</span>`}
 
 /* ---------- Live tab ---------- */
@@ -734,7 +826,7 @@ function renderLive(){
   <div class="sumline"><span><b class="n">${list.length}</b>in the 2nd half</span><span><b class="n">${cands.length}</b>in the window</span><span><b class="n">${other.length}</b>2H goal already in</span></div><p class="note" id="autoInfo" style="margin:-6px 0 12px">${autoText()}</p>`;
   if(!META.lastRefresh)h+=`<div class="card empty">Tap Refresh to load live matches.</div>`;
   else if(!cands.length)h+=`<div class="card empty">No second-half matches in the ${S.win0}–${S.win1}' window without a 2H goal right now.</div>`;
-  else for(const [lg,a] of lgGroups(cands,c=>c.o,c=>c.p))h+=lgHead(lg,`${a.length} pick${a.length===1?"":"s"} · best ${pct(a[0].p)}`)+`<div class="grid">${a.map(candCard).join("")}</div>`;
+  else for(const [lg,a] of lgGroups(cands,c=>c.o,c=>{const og=ODDS[c.o.id],oc=c.cm&&ODDS["c"+c.o.id];const ev=Math.max(og?og*c.p-1:-9,oc?oc*c.cm.p-1:-9);return ev>-9?10+ev:c.p}))h+=lgHead(lg,`${a.length} pick${a.length===1?"":"s"}`)+`<div class="grid">${a.map(candCard).join("")}</div>`;
   if(other.length){h+=`<h3 class="sec">2H goal already in</h3>`;for(const [lg,a] of lgGroups(other,o=>o,o=>o.el))h+=lgHead(lg)+`<div class="grid">${a.map(o=>miniCard(o)).join("")}</div>`}
   h+=todayHtml();
   box.innerHTML=h}
@@ -750,8 +842,40 @@ function resCard(o){const lt=lateOf(o),hit=lt&&lt.length,s=SM.first.get(o.id),wo
   const gl=(o.goals||[]).slice().sort((a,b)=>a.m-b.m||a.x-b.x).map(g=>`<span class="gm${g.m>=S.late?" lt":""}" title="${esc(g.p)}${g.t===o.h.id?" ("+esc(o.h.n)+")":g.t===o.a.id?" ("+esc(o.a.n)+")":""}">${g.m}'${g.x?"+"+g.x:""}</span>`).join("");
   const vd=lt===null?`<div class="vd pend">Goal minutes pending</div>`:hit?`<div class="vd hit">✓ Met: goal ${LL()} (${lt.slice().sort((x,y)=>x.m-y.m).map(g=>g.m+"'").join(", ")})</div>`:`<div class="vd miss">✗ Not met: no goal ${LL()}</div>`;
   const pk=s?`<div class="vd ${won?"hit":"miss"}">Pick at ${s.el}' (${pct(s.p)}) ${won?"won":"lost"}${s.odds?` · odds ${s.odds}`:""}</div>`:"";
-  return`<article class="mc${hit?" late":""}"><div class="mh">${img(lgLogo(o.lg),"lgl")}<span>${new Date(o.ts).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})} kick-off</span><span class="min n ft">${o.st}</span></div>
-  ${teamLines(o)}<div class="htl">${htLbl(o)}&nbsp;</div>${tl(o)}${gl?`<div class="gms">Goals ${gl}</div>`:""}${vd}${pk}</article>`}
+  const cor=o.ch!=null?`<div class="gms">Corners ${o.ch+o.ca} (${o.ch}–${o.ca})</div>`:"";
+  return`<article class="mc${hit?" late":lt&&!hit?" nomet":""}"><div class="mh">${img(lgLogo(o.lg),"lgl")}<span>${new Date(o.ts).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})} kick-off</span><span class="min n ft">${o.st}</span></div>
+  ${teamLines(o)}<div class="htl">${htLbl(o)}&nbsp;</div>${tl(o)}${gl?`<div class="gms">Goals ${gl}</div>`:""}${cor}${vd}${pk}</article>`}
+
+/* ---------- Edges tab ---------- */
+let ELG="";
+function renderEdges(){
+  const arr=[...FX.values()].filter(o=>FIN.has(o.st)&&o.ts>=Date.now()-HIST*DAY),E=ELG?buildEdges(arr,ELG):EDGE,base=E.base;
+  const lab=k=>k.split("|").map(x=>E.lab[x]||EDGE.lab[x]||x).join(" + ");
+  const row=(k,s)=>{const r=s.h/s.n,l=r-base;return`<div class="rk"><span>${esc(lab(k))}</span><span class="r n">${s.n}</span><span class="r n ${l>=0?"up":"dn"}">${pct(r)} (${l>=0?"+":""}${Math.round(l*100)})</span><span class="r n">${(1/r).toFixed(2)}</span><span class="r n x">${(1/r*(1+S.edge/100)).toFixed(2)}</span></div>`};
+  const hd=`<div class="rk hd"><span>Situation at 62′</span><span class="r">Games</span><span class="r">Goal ${LL()}</span><span class="r">Fair</span><span class="r x">Bet if ≥</span></div>`;
+  const sing=[...E.single.entries()].filter(([k,s])=>s.n>=S.minEdge&&!(ELG&&k.startsWith("lg"))).sort((a,b)=>b[1].h/b[1].n-a[1].h/a[1].n);
+  const pairs=[...E.pair.entries()].filter(([k,s])=>s.n>=Math.max(S.minEdge,40)).map(([k,s])=>[k,s,s.h/s.n-base]);
+  const top=pairs.filter(x=>x[2]>0).sort((a,b)=>b[2]-a[2]).slice(0,15),bot=pairs.filter(x=>x[2]<0).sort((a,b)=>a[2]-b[2]).slice(0,8);
+  // bets
+  const bets=[...BETS.values()].sort((a,b)=>b.t-a.t),set=bets.map(b=>[b,betResult(b)]).filter(x=>x[1]!==null);
+  let stk=0,pl=0,won=0;for(const [b,r] of set){stk+=b.stake;if(r){won++;pl+=b.stake*(b.odds-1)}else pl-=b.stake}
+  const by=(f)=>{const m=new Map();for(const [b,r] of set)for(const k of [].concat(f(b))){const x=m.get(k)||{n:0,w:0,s:0,pl:0};x.n++;x.s+=b.stake;if(r){x.w++;x.pl+=b.stake*(b.odds-1)}else x.pl-=b.stake;m.set(k,x)}return m};
+  const brow=(name,x)=>`<div class="rk"><span>${esc(name)}</span><span class="r n">${x.n}</span><span class="r n">${pct(x.w/x.n)}</span><span class="r n ${x.pl>=0?"up":"dn"}">${x.pl>=0?"+":""}${x.pl.toFixed(1)}u</span><span class="r n x ${x.pl>=0?"up":"dn"}">${x.s?((x.pl/x.s*100).toFixed(0)+"%"):"—"}</span></div>`;
+  const bhd=`<div class="rk hd"><span></span><span class="r">Bets</span><span class="r">Won</span><span class="r">Profit</span><span class="r x">ROI</span></div>`;
+  let hh=`<h2>Edges</h2><p class="lead">Where a goal ${LL()} is more or less likely than usual, based on the score and situation at 62′. Profit comes from betting the green rows when the price is above “Bet if ≥”.</p>
+  <div class="bar-row"><select class="inp" id="eLg"><option value="">All leagues</option>${Object.entries(LEAGUES).map(([k,v])=>`<option value="${k}"${ELG==k?" selected":""}>${v}</option>`).join("")}</select><label class="chip">Min games <input class="inp n" data-s="minEdge" type="number" min="10" max="200" value="${S.minEdge}" style="width:64px;padding:3px 6px"></label></div>`;
+  if(!base)hh+=`<div class="card empty">Needs matches with goal minutes. Run “Fill missing goal minutes for free” in Data.</div>`;
+  else hh+=`<div class="kpis"><div class="kpi"><span>Matches with goal minutes</span><b class="n">${E.n}</b></div><div class="kpi"><span>Goal ${LL()} overall</span><b class="n" style="color:var(--g)">${pct(base)}</b><small>fair ${(1/base).toFixed(2)}</small></div></div>
+  <div class="two"><div class="card"><h3>Best situations</h3>${hd}${top.length?top.map(([k,s])=>row(k,s)).join(""):`<p class="note">Not enough matches yet.</p>`}</div>
+  <div class="card"><h3>Situations to avoid</h3>${hd}${bot.length?bot.map(([k,s])=>row(k,s)).join(""):`<p class="note">Not enough matches yet.</p>`}</div></div>
+  <div class="card"><h3>Every single factor</h3>${hd}${sing.map(([k,s])=>row(k,s)).join("")}</div>`;
+  hh+=`<div class="card"><h3>Your bets</h3>${set.length?`<div class="kpis"><div class="kpi"><span>Settled</span><b class="n">${set.length}</b><small>${bets.length-set.length} pending</small></div><div class="kpi"><span>Won</span><b class="n">${pct(won/set.length)}</b></div><div class="kpi"><span>Profit</span><b class="n" style="color:${pl>=0?"var(--g)":"var(--r)"}">${pl>=0?"+":""}${pl.toFixed(1)}u</b></div><div class="kpi"><span>ROI per unit staked</span><b class="n" style="color:${pl>=0?"var(--g)":"var(--r)"}">${(pl/stk*100).toFixed(1)}%</b></div></div>
+    <h3 style="margin-top:12px">By market</h3>${bhd}${[...by(b=>b.mkt==="corner"?"Corners":"2H goal")].map(([k,x])=>brow(k,x)).join("")}
+    <h3 style="margin-top:12px">By situation</h3>${bhd}${[...by(b=>b.conds||[])].filter(([k,x])=>x.n>=3).sort((a,b)=>b[1].pl-a[1].pl).map(([k,x])=>brow(EDGE.lab[k]||k,x)).join("")||`<p class="note">Shows once a situation has 3+ settled bets.</p>`}`
+    :`<p class="note">Tap “I bet this” on a live card after entering your odds. Bets settle at full time and show profit by market and situation here.${bets.length?` ${bets.length} pending.`:""}</p>`}
+  ${bets.length?`<h3 style="margin-top:12px">Recent</h3>${bets.slice(0,20).map(b=>{const r=betResult(b);return`<div class="rk"><span>${esc(b.nm)} · ${b.mkt==="corner"?`Over ${b.line} corners`:"2H goal"} at ${b.el}′</span><span class="r n">@${b.odds}</span><span class="r n">${b.stake}u</span><span class="r n ${r===null?"":r?"up":"dn"}">${r===null?"pending":r?"won":"lost"}</span><span class="r n x"></span></div>`}).join("")}`:""}</div>
+  <p class="note">Stakes use ${S.kelly}% Kelly on a ${S.bank}u bank, capped at ${S.maxStake}%. Kelly only helps if the probabilities are well calibrated, so check Insights before raising it.</p>`;
+  $("edg").innerHTML=hh}
 
 /* ---------- Archive tab ---------- */
 let AP="7d",ALG="";
@@ -797,14 +921,22 @@ function renderArchive(){
       return`<div class="drow"><span>${d.toLocaleDateString("en-GB",byDay?{weekday:"short",day:"numeric",month:"short"}:{month:"long",year:"numeric"})}</span><span class="r n">${s.n}</span><span style="display:flex;gap:8px;align-items:center"><span class="t" style="flex:1"><i style="width:${(r||0)*100}%"></i></span><span class="n" style="min-width:86px">${r==null?"pending":`${pct(r)} · ${s.late}/${s.nev}`}</span></span><span class="r n x">${pct(rt(s.m2,s.n2))}</span><span class="r n x">${s.ps?`${s.pw}–${s.ps-s.pw}`:"—"}</span></div>`}).join("")}</div>`}
   $("arc").innerHTML=h}
 function teamLines(o){return`<div class="tm">${tbtn(o.h)}<b class="sc n">${o.gh??"-"}</b></div><div class="tm">${tbtn(o.a)}<b class="sc n">${o.ga??"-"}</b></div>`}
-function candCard(c){const o=c.o,id=o.id;
-  return`<article class="mc"><div class="mh">${img(lgLogo(o.lg),"lgl")}<span>${LEAGUES[o.lg]}</span><span class="min n">${minLbl(o)}</span></div>
-  ${teamLines(o)}<div class="htl">HT ${o.hth??o.gh}–${o.hta??o.ga}</div>${tl(o)}
+function candCard(c){const o=c.o,id=o.id,cm=c.cm,ed=edgeFor(o,c.el),best=cornBest(c);
+  const logged=[...BETS.values()].filter(b=>b.id===id).map(b=>b.mkt);
+  return`<article class="mc${best?" corn":""}" data-card="${id}"><div class="mh">${img(lgLogo(o.lg),"lgl")}<span>${LEAGUES[o.lg]}</span>${best?`<span class="bestc">Corners look better</span>`:""}<span class="min n">${minLbl(o)}</span></div>
+  ${teamLines(o)}<div class="htl">HT ${o.hth??o.gh}–${o.hta??o.ga}${o.rd&&o.rd.length?` · <span style="color:var(--r)">${o.rd.length} red</span>`:""}</div>${tl(o)}
   <div class="nums"><div class="p"><span class="k">P(2H goal)</span><b class="n">${pct(c.p)}</b></div><div><span class="k">Fair odds</span><b class="n">${c.fair.toFixed(2)}</b></div><div><span class="k">Bet only if ≥</span><b class="n">${c.betIf.toFixed(2)}</b></div></div>
-  <div class="odds"><label for="od${id}">Your odds</label><input class="inp n" id="od${id}" data-odds="${id}" inputmode="decimal" placeholder="e.g. ${c.betIf.toFixed(2)}" value="${ODDS[id]||""}"><span id="ev${id}">${evChip(id,c)}</span></div>
+  <div class="sub2">Goal ${LL()}: <b class="n">${pct(c.p63)}</b> · fair ${(1/c.p63).toFixed(2)}</div>
+  ${ed?`<div class="edge ${ed.l>0?"up":"dn"}">${ed.l>0?"▲":"▼"} ${esc(ed.lab)}: ${pct(ed.r)} had a goal ${LL()} (${ed.l>0?"+":""}${Math.round(ed.l*100)} pts, n ${ed.n})</div>`:""}
+  <div class="odds"><label for="od${id}">Your odds</label><input class="inp n" id="od${id}" data-odds="${id}" inputmode="decimal" placeholder="${c.betIf.toFixed(2)}" value="${ODDS[id]||""}"><span id="ev${id}">${evHtml(c.p,ODDS[id])}</span>
+    <button class="btn sm bet" data-bet="goal" data-id="${id}">${logged.includes("goal")?"Logged ✓":"I bet this"}</button></div>
+  ${cm?`<div class="cbox"><div class="chd">Corners ${cm.C} now (${cm.ch}–${cm.ca}) · about ${cm.lam.toFixed(1)} more expected</div>
+    <div class="nums c3"><div class="p"><span class="k">Over ${cm.line} corners</span><b class="n">${pct(cm.p)}</b></div><div><span class="k">Fair odds</span><b class="n">${cm.fair.toFixed(2)}</b></div><div><span class="k">Bet only if ≥</span><b class="n">${cm.betIf.toFixed(2)}</b></div></div>
+    <div class="odds"><label for="oc${id}">Your odds</label><input class="inp n" id="oc${id}" data-codds="${id}" inputmode="decimal" placeholder="${cm.betIf.toFixed(2)}" value="${ODDS["c"+id]||""}"><span id="cev${id}">${evHtml(cm.p,ODDS["c"+id])}</span>
+    <button class="btn sm bet" data-bet="corner" data-id="${id}">${logged.includes("corner")?"Logged ✓":"I bet this"}</button></div></div>`:`<div class="mf">Corners: no live corner count for this match yet.</div>`}
   <div class="mf">Pre-match 2H goals ${c.pre.toFixed(2)} · ${esc(c.note)}${c.reds?` · ${c.reds} red`:""} · History ${c.hn||"league avg"} / ${c.an||"league avg"} games · ${c.mt==="data"?`Data model (${c.en} matches at ${c.el}′)`:"Classic model"}</div></article>`}
 function miniCard(o){const lt=lateOf(o),late=lt&&lt.length;
-  return`<article class="mc${late?" late":""}"><div class="mh">${img(lgLogo(o.lg),"lgl")}<span>${LEAGUES[o.lg]}</span><span class="min n${FIN.has(o.st)?" ft":""}">${minLbl(o)}</span></div>
+  return`<article class="mc${late?" late":FIN.has(o.st)&&lt?" nomet":""}"><div class="mh">${img(lgLogo(o.lg),"lgl")}<span>${LEAGUES[o.lg]}</span><span class="min n${FIN.has(o.st)?" ft":""}">${minLbl(o)}</span></div>
   ${teamLines(o)}<div class="htl">${htLbl(o)}${FIN.has(o.st)&&!o.evFin?" · goal minutes pending":""}&nbsp;</div>${tl(o)}${lateTag(o)}</article>`}
 
 /* ---------- Matches tab ---------- */
@@ -944,7 +1076,7 @@ function renderData(){
   <div class="card"><h3>Settings</h3><div class="setg">
     ${setf("win0","Window start (minute)",0,90)}${setf("win1","Window end (minute)",0,95)}${setf("edge","Edge over fair odds (%)",0,50)}
     ${setf("late","Late goal from minute",46,90,"Counts goals from this minute. The API gives whole minutes, so 63 covers 62:00–62:59 onwards.")}
-    ${setf("rpm","Requests per minute (plan limit)",1,450)}${setf("reserve","Keep this many requests for live",0,1000)}${setf("catchup","Goal-minute requests per refresh",0,10)}${setf("maxStats","Live stats requests per refresh (free plan)",0,20)}${setf("prior","Team-rate shrinkage (games)",0,30)}${setf("minN","Min games for insights",3,60)}
+    ${setf("rpm","Requests per minute (plan limit)",1,450)}${setf("reserve","Keep this many requests for live",0,1000)}${setf("catchup","Goal-minute requests per refresh",0,10)}${setf("maxStats","Live stats requests per refresh (free plan)",0,20)}${setf("prior","Team-rate shrinkage (games)",0,30)}${setf("minN","Min games for insights",3,60)}${setf("cornT","Corner line: target chance (%)",55,90)}${setf("bank","Bankroll (units)",1,100000)}${setf("kelly","Kelly fraction (%)",0,100)}${setf("maxStake","Max stake (% of bank)",0,20)}
   </div></div>
   <div class="card"><h3>Backup</h3><div class="bar-row"><button class="btn sm" id="exp">Export backup</button><label class="btn sm">Import backup<input type="file" id="imp" accept=".json" hidden></label><button class="btn dng sm" id="wipe">Delete all matches</button></div></div>`}
 function setf(k,l,mn,mx,hint){return`<div class="fld"><label for="s_${k}">${l}</label><input class="inp n" id="s_${k}" data-s="${k}" type="number" min="${mn}" max="${mx}" value="${S[k]}">${hint?`<span class="note" style="margin:0">${hint}</span>`:""}</div>`}
@@ -954,7 +1086,7 @@ function tab(){return(location.hash||"#live").slice(1)}
 function renderAll(){const t=tab();renderQuota();
   document.querySelectorAll(".tabs a").forEach(a=>a.toggleAttribute("aria-current",false));const a=document.querySelector(`.tabs a[data-t="${t}"]`);if(a)a.setAttribute("aria-current","page");
   document.querySelectorAll("section.tab").forEach(s=>s.classList.toggle("on",s.id==="t-"+t));
-  if(t==="live")renderLive();else if(t==="archive")renderArchive();else if(t==="matches")renderMatches();else if(t==="teams")renderTeams();else if(t==="insights")renderInsights();else if(t==="data")renderData()}
+  if(t==="live")renderLive();else if(t==="edges")renderEdges();else if(t==="archive")renderArchive();else if(t==="matches")renderMatches();else if(t==="teams")renderTeams();else if(t==="insights")renderInsights();else if(t==="data")renderData()}
 addEventListener("hashchange",()=>{MP=60;renderAll();scrollTo(0,0)});
 
 /* ---------- events ---------- */
@@ -980,6 +1112,7 @@ document.addEventListener("click",async e=>{
       out.textContent=`Plan ${sub.plan||"?"} · ${rq.current??"?"} of ${rq.limit_day??"?"} requests used today${sub.end?` · renews ${String(sub.end).slice(0,10)}`:""}.`}catch(err){out.textContent=err.message}return}
   if(t.id==="bfGo"){backfill();return}
   if(t.id==="bfStop"){STOP=true;toast("Stopping after the current request…");return}
+  const bt=t.closest("[data-bet]");if(bt){placeBet(+bt.dataset.id,bt.dataset.bet);return}
   if(t.id==="espGo"){espnFillHistory();return}
   if(t.id==="alOn"){enableAlerts();return}
   if(t.id==="alOff"){S.alerts=false;saveSettings();renderData();return}
@@ -994,12 +1127,13 @@ document.addEventListener("click",async e=>{
 });
 document.addEventListener("change",async e=>{
   const t=e.target;
-  if(t.dataset&&t.dataset.s){const k=t.dataset.s,v=parseFloat(t.value);if(isFinite(v)){S[k]=v;saveSettings();if(k==="late"||k==="prior")buildStats();if(k==="auto")setAuto()}return}
+  if(t.dataset&&t.dataset.s){const k=t.dataset.s,v=parseFloat(t.value);if(isFinite(v)){S[k]=v;saveSettings();if(k==="late"||k==="prior"||k==="minEdge")buildStats();if(tab()==="edges")renderEdges();if(k==="auto")setAuto()}return}
   if(t.id==="srcSel"){S.src=t.value;saveSettings();renderData();return}
   if(t.id==="amSel"){S.autoMode=t.value;saveSettings();return}
   if(t.id==="alEv"){S.alertEv=t.value==="1";saveSettings();return}
   if(t.id==="mdSel"){S.model=t.value;saveSettings();renderAll();return}
   if(t.id==="aLg"){ALG=t.value;renderArchive();return}
+  if(t.id==="eLg"){ELG=t.value;renderEdges();return}
   if(t.id==="iLg"){ILG=t.value;renderInsights();return}
   if(t.id==="iK"){IK=t.value;renderInsights();return}
   if(t.id==="iMin"){const v=parseInt(t.value);if(v>=3){S.minN=v;saveSettings();renderInsights()}return}
@@ -1009,8 +1143,11 @@ document.addEventListener("change",async e=>{
       await DB.put("fx",[...FX.values()]);await DB.put("snap",[...SNAP.values()]);await DB.kset("odds",ODDS);await saveMeta();buildStats();renderAll();toast(`Imported ${d.fx.length} matches.`)}
     catch(err){toast("That file isn’t a Second Half backup.")}t.value="";return}
 });
-document.addEventListener("input",e=>{const i=e.target;if(!i.dataset||!i.dataset.odds)return;const id=+i.dataset.odds,v=parseFloat(i.value.replace(",","."));
-  if(v>1)ODDS[id]=v;else delete ODDS[id];saveOdds();const c=LASTC.get(id),ev=$("ev"+id);if(ev)ev.innerHTML=evChip(id,c);
+document.addEventListener("input",e=>{const i=e.target;if(!i.dataset)return;
+  if(i.dataset.codds){const id=+i.dataset.codds,v=parseFloat(i.value.replace(",","."));if(v>1)ODDS["c"+id]=v;else delete ODDS["c"+id];saveOdds();
+    const c=LASTC.get(id);if(c&&c.cm){const ev=$("cev"+id);if(ev)ev.innerHTML=evHtml(c.cm.p,ODDS["c"+id]);markBest(c)}return}
+  if(!i.dataset.odds)return;const id=+i.dataset.odds,v=parseFloat(i.value.replace(",","."));
+  if(v>1)ODDS[id]=v;else delete ODDS[id];saveOdds();const c=LASTC.get(id),ev=$("ev"+id);if(ev&&c)ev.innerHTML=evHtml(c.p,ODDS[id]);if(c)markBest(c);
   let last=null;for(const s of SNAP.values())if(s.id===id&&(!last||s.t>last.t))last=s;if(last){last.odds=ODDS[id]||null;DB.put("snap",[last])}});
 
 
@@ -1020,7 +1157,7 @@ onAuthStateChanged(auth,async u=>{
   USER=u;$("gate").hidden=true;status("Loading…");
   try{await DB.open();const owner=await DB.kget("owner");if(owner&&owner!==u.uid)await DB.clear();await DB.kset("owner",u.uid);
     const [fx,sn]=await Promise.all([DB.all("fx"),DB.all("snap")]);fx.forEach(o=>FX.set(o.id,o));sn.forEach(s=>SNAP.set(s.k,s));
-    ODDS=(await DB.kget("odds"))||{};META=Object.assign(META,(await DB.kget("meta"))||{});CHU=(await DB.kget("chunkU"))||{}}
+    ODDS=(await DB.kget("odds"))||{};((await DB.kget("bets"))||[]).forEach(b=>BETS.set(b.k,b));META=Object.assign(META,(await DB.kget("meta"))||{});CHU=(await DB.kget("chunkU"))||{}}
   catch(e){toast("This browser won’t cache data, so each visit reads from your account.")}
   try{
     const snap=await getDoc(uref()),ud=snap.exists()?snap.data():{};
@@ -1035,7 +1172,7 @@ onAuthStateChanged(auth,async u=>{
   renderAll();setAuto();setTimeout(autoTick,1500);
 });
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").then(r=>{SWREG=r}).catch(()=>{});
-addEventListener("pagehide",()=>{if(DIRTY.size||SNAPDIRTY)pushCloud()});
+addEventListener("pagehide",()=>{if(DIRTY.size||SNAPDIRTY||BETSDIRTY)pushCloud()});
 </script>
 </body>
 </html>
