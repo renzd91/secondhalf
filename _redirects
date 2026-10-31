@@ -1,0 +1,2 @@
+/api/*  https://v3.football.api-sports.io/:splat  200
+/espn/*  https://site.api.espn.com/:splat  200
