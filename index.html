@@ -246,6 +246,17 @@ table.st tr[data-ap]:hover td{background:var(--s2)}
 .m63{position:relative;z-index:2;margin-top:6px;font-size:13.5px;color:#fff;background:rgba(10,18,32,.85);border-radius:8px;padding:5px 9px;display:inline-block;text-shadow:var(--ts)}
 .m63 b{color:var(--amb);font:800 17px var(--cond)}.m63 span{color:var(--m);font-size:12px}
 .row .rx .ms{color:var(--r);font-weight:700}
+.plan{display:flex;gap:12px;align-items:flex-start;margin-top:12px;padding:10px;border-radius:12px;background:var(--s2);border:1px solid var(--ln)}
+.plan.go{border-color:var(--g);background:linear-gradient(90deg,rgba(47,210,122,.16),var(--s2))}
+.plan .dn{flex:none}
+.pv{min-width:0}
+.vl{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13.5px;color:#fff;text-shadow:var(--ts)}
+.vb{font:800 16px var(--cond);border-radius:6px;padding:2px 9px;letter-spacing:.03em}
+.vb.ok{background:var(--g);color:#04210f}.vb.wt{background:var(--amb);color:#1a1100}.vb.no{background:var(--s3);color:#fff}
+.plan ul{list-style:none;margin-top:6px;font-size:12.5px;line-height:1.5}
+.plan li.y{color:#d8ffe9}.plan li.x{color:#ffb3bc}.plan li.q{color:#ffe1b0}
+.mc.betnow{border-color:var(--g);box-shadow:0 0 0 2px rgba(47,210,122,.55),0 0 22px rgba(47,210,122,.18)}
+.pstat{display:flex;gap:14px;align-items:center}.pstat>div{min-width:0}.pstat svg{flex:none}
 /* data */
 .fld{display:grid;gap:6px;margin-bottom:12px}
 .fld label{font-size:13.5px;color:var(--m)}
@@ -489,7 +500,9 @@ function buildStats(){
       const g={o,home,gf,ga,cf:o.ch==null?null:(home?o.ch:o.ca),cA:o.ch==null?null:(home?o.ca:o.ch),f2:has2?gf-(home?o.hth:o.hta):null,a2:has2?ga-(home?o.hta:o.hth):null,late:lt?lt.length>0:null,lateF:lt?lt.some(x=>x.t===tm.id):null};
       s.G.push(g);all.push(g)}}
   for(const s of T.values()){s.lg=s.G[0].o.lg;s.A=agg(s.G,s.id)}
-  TS=T;LGS=L;BASEA=agg(all,null);buildCurves(arr);EDGE=buildEdges(arr)}
+  TS=T;LGS=L;BASEA=agg(all,null);buildCurves(arr);EDGE=buildEdges(arr);try{const C=calib();MODELPICK=C.nb>=50&&C.bc<C.bd?"classic":"data"}catch(e){}}
+let MODELPICK="data";
+const useData=()=>S.model!=="classic"&&!(S.model==="auto"&&MODELPICK==="classic");
 const lgCorn=lg=>{const l=LGS[lg];return l&&l.nc>=60?l.cs/l.nc:(LEAGUE_C[lg]||9.8)};
 function teamCorn(lg,tid){const avg=lgCorn(lg)/2,s=TS.get(tid),k=6;if(!s||!s.A.nc)return{f:avg,a:avg,n:0};return{f:(s.A.cfs+k*avg)/(s.A.nc+k),a:(s.A.cas+k*avg)/(s.A.nc+k),n:s.A.nc}}
 function nbTail(lam,k,r){if(k<=0)return 1;const q=r/(r+lam);let pm=Math.pow(q,r),c=pm;for(let i=0;i<k-1;i++){pm=pm*(i+r)/(i+1)*(1-q);c+=pm}return Math.max(0,1-c)}
@@ -555,7 +568,7 @@ function model(o){
     mult=(1-w)+w*ratio;note=st.haveXg?`xG ${st.xg.toFixed(2)}`:`${st.sot} shots on target`}
   const x=Math.min(1,Math.max(0,(el-45)/50)),rem=1-Math.pow(x,1.15),diff=Math.abs(gh-ga),sm=diff===1?1.05:diff>=2?.9:1,rm=reds>0?1.1:1;
   const classicAt=m=>{const xx=Math.min(1,Math.max(0,(m-45)/50));return 1-Math.exp(-pre*(1-Math.pow(xx,1.15))*mult*sm*rm)};
-  const dataAt=m=>{const E=S.model==="classic"?null:empP(o.lg,m);if(!E||!(E.p>0&&E.p<1))return null;const tf=Math.min(1.6,Math.max(.6,pre/lgAvg2H(o.lg)));return{p:1-Math.exp(Math.log(1-E.p)*tf*mult*sm*rm),n:E.n||E.na}};
+  const dataAt=m=>{const E=useData()?empP(o.lg,m):null;if(!E||!(E.p>0&&E.p<1))return null;const tf=Math.min(1.6,Math.max(.6,pre/lgAvg2H(o.lg)));return{p:1-Math.exp(Math.log(1-E.p)*tf*mult*sm*rm),n:E.n||E.na}};
   const pc=classicAt(el),D=dataAt(el),pd=D?D.p:null,en=D?D.n:0,p=pd!=null?pd:pc,fair=1/p;
   const m63=S.late-1,p63=el>=m63?p:((dataAt(m63)||{}).p??classicAt(m63));
   return{o,el,pre,note,reds,p,pc,pd,en,p63,cm:cornerModel(o,el),mt:pd!=null?"data":"classic",fair,betIf:fair*(1+S.edge/100),hn:h.n,an:a.n}}
@@ -801,11 +814,33 @@ function retroP63(o){if(!o.goals||o.hth==null)return null;const m=S.late-1;
   const h=teamRate(o.lg,o.h.id),a=teamRate(o.lg,o.a.id),pre=(h.f+a.a)/2+(a.f+h.a)/2,reds=o.rd?o.rd.filter(r=>r.m<=m).length:0;
   const d=Math.abs(gh-ga),sm=d===1?1.05:d>=2?.9:1,rm=reds?1.1:1,xx=Math.min(1,Math.max(0,(m-45)/50));
   let p=1-Math.exp(-pre*(1-Math.pow(xx,1.15))*sm*rm);
-  if(!g2&&S.model!=="classic"){const E=empP(o.lg,m);if(E&&E.p>0&&E.p<1){const tf=Math.min(1.6,Math.max(.6,pre/lgAvg2H(o.lg)));p=1-Math.exp(Math.log(1-E.p)*tf*sm*rm)}}
+  if(!g2&&useData()){const E=empP(o.lg,m);if(E&&E.p>0&&E.p<1){const tf=Math.min(1.6,Math.max(.6,pre/lgAvg2H(o.lg)));p=1-Math.exp(Math.log(1-E.p)*tf*sm*rm)}}
   return{p,src:`at ${gh}-${ga}`}}
-function kellyU(p,o){if(!o||o<=1)return 0;const f=(p*o-1)/(o-1);if(f<=0)return 0;return Math.min(S.maxStake/100,f*S.kelly/100)*S.bank}
-function evHtml(p,o){if(!o||!p)return"";const ev=o*p-1,st=kellyU(p,o);return`<span class="ev ${ev>0?"pos":"neg"}">EV ${ev>0?"+":""}${(ev*100).toFixed(1)}%${st>0?` · stake ${st.toFixed(1)}u`:""}</span>`}
-function cornBest(c){const cm=c.cm;if(!cm)return false;const og=ODDS[c.o.id],oc=ODDS["c"+c.o.id];
+function betPL(){let pl=0,n=0,stk=0;for(const b of BETS.values()){const r=betResult(b);if(r===null)continue;n++;stk+=b.stake;pl+=r?b.stake*(b.odds-1):-b.stake}return{pl,n,stk}}
+const bankNow=()=>Math.max(1,S.bank+betPL().pl);
+function kellyU(p,o){if(!o||o<=1)return 0;const f=(p*o-1)/(o-1);if(f<=0)return 0;return Math.min(S.maxStake/100,f*S.kelly/100)*bankNow()}
+function dayState(){const t0=new Date();t0.setHours(0,0,0,0);const td=[...BETS.values()].filter(b=>b.t>=t0.getTime());let pl=0;
+  for(const b of td){const r=betResult(b);if(r!==null)pl+=r?b.stake*(b.odds-1):-b.stake}
+  const lossLim=-.05*bankNow();if(td.length>=3)return{ok:false,n:td.length,pl,why:"Daily limit reached (3 bets today)"};
+  if(pl<=lossLim)return{ok:false,n:td.length,pl,why:`Stop for today: down ${(-pl).toFixed(1)} units`};return{ok:true,n:td.length,pl}}
+function donut(met,tot,size){const s=size||58,r=s/2-5,C=2*Math.PI*r,f=tot?met/tot:0,col=f>=1?"var(--g)":f>=.6?"var(--amb)":"var(--r)";
+  return`<svg class="dn" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" aria-label="${met} of ${tot}"><circle cx="${s/2}" cy="${s/2}" r="${r}" fill="none" stroke="var(--s3)" stroke-width="7"/><circle cx="${s/2}" cy="${s/2}" r="${r}" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C*f).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 ${s/2} ${s/2})"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="Barlow Condensed,Arial Narrow,sans-serif" font-weight="800" font-size="${s*.3}">${met}/${tot}</text></svg>`}
+function plan(c){const o=c.o,id=o.id,mk=cornBest(c)?"corner":"goal",cm=c.cm,p=mk==="corner"?cm.p:c.p,minO=mk==="corner"?cm.betIf:c.betIf,odds=ODDS[mk==="corner"?"c"+id:id],ed=edgeFor(o,c.el),day=dayState();
+  const hist=mk==="corner"?cm.hn>0&&cm.an>0:c.hn>0&&c.an>0&&(c.mt==="data"||S.model==="classic");
+  const ck=[
+    {ok:odds?odds>=minO:null,t:odds?(odds>=minO?`Price is good (${odds} vs ${minO.toFixed(2)} needed)`:`Price too low (need ${minO.toFixed(2)} or more)`):`Type the bookmaker’s odds (need ${minO.toFixed(2)} or more)`},
+    {ok:hist,t:hist?"Enough history on both teams":"Not enough history on these teams yet"},
+    {ok:!(ed&&ed.l<0),t:ed&&ed.l<0?"Risky situation for late goals ▼":ed&&ed.l>0?"Favourable situation ▲":"No warning signs"},
+    {ok:c.el>=55&&c.el<=70,t:c.el<55?`Too early (${c.el}′, wait until 55′)`:c.el>70?`Too late (${c.el}′)`:`Good timing (${c.el}′)`},
+    {ok:day.ok,t:day.ok?`Daily limit OK (${day.n} of 3 bets today)`:day.why}];
+  const met=ck.filter(x=>x.ok===true).length,all=met===ck.length,waitPrice=ck[0].ok===null&&ck.slice(1).every(x=>x.ok),st=odds?kellyU(p,odds):0;
+  const what=mk==="corner"?`Over ${cm.line} corners`:"a goal before full time";
+  return{mk,met,tot:ck.length,ck,all,waitPrice,st,what}}
+function planBox(c){const P=plan(c),id=c.o.id;
+  const v=P.all?`<b class="vb ok">BET ✓</b><span>${P.what}${P.st>0?` · stake <b>${P.st.toFixed(1)} units</b>`:""}</span>`:P.waitPrice?`<b class="vb wt">CHECK PRICE</b><span>Everything else is OK for ${P.what}</span>`:`<b class="vb no">SKIP</b><span>${P.tot-P.met} rule${P.tot-P.met===1?"":"s"} not met</span>`;
+  return`<div class="plan${P.all?" go":""}" id="pl${id}">${donut(P.met,P.tot)}<div class="pv"><div class="vl">${v}</div><ul>${P.ck.map(x=>`<li class="${x.ok===true?"y":x.ok===null?"q":"x"}">${x.ok===true?"✓":x.ok===null?"•":"✗"} ${x.t}</li>`).join("")}</ul></div></div>`}
+function evHtml(p,o){if(!o||!p)return"";const ev=o*p-1;return`<span class="ev ${ev>0?"pos":"neg"}">${ev>0?`Good price +${(ev*100).toFixed(0)}%`:"Price too low"}</span>`}
+function cornBest(c){const cm=c.cm;if(!cm||!(cm.hn>0&&cm.an>0))return false;const og=ODDS[c.o.id],oc=ODDS["c"+c.o.id];
   if(og&&oc)return oc*cm.p-1>og*c.p-1&&oc*cm.p-1>0;if(oc)return oc*cm.p-1>0&&!og;if(og)return false;return cm.p>=c.p+.05}
 let BETS=new Map(),BETSDIRTY=false;
 const saveBets=()=>{DB.kset("bets",[...BETS.values()]);BETSDIRTY=true;schedulePush()};
@@ -817,6 +852,7 @@ function placeBet(id,mkt){const c=LASTC.get(id);if(!c)return;const o=c.o,odds=OD
   BETS.set(k,{k,id,mkt,odds,p,stake:+st.toFixed(2),el:c.el,t:Date.now(),g0:(o.gh||0)+(o.ga||0),line:mkt==="corner"?c.cm.line:null,lg:o.lg,nm:`${o.h.n} v ${o.a.n}`,conds});
   saveBets();toast(`Logged: ${mkt==="corner"?`Over ${c.cm.line} corners`:"2H goal"} @ ${odds}, ${st.toFixed(1)}u`);renderLive()}
 function markBest(c){const card=document.querySelector(`[data-card="${c.o.id}"]`);if(!card)return;const b=cornBest(c);card.classList.toggle("corn",b);
+  const pb=$("pl"+c.o.id);if(pb)pb.outerHTML=planBox(c);card.classList.toggle("betnow",plan(c).all);
   let t=card.querySelector(".bestc");if(b&&!t){card.querySelector(".mh .min").insertAdjacentHTML("beforebegin",'<span class="bestc">Corners look better</span>')}else if(!b&&t)t.remove()}
 function evChip(id,c){const od=ODDS[id];if(!od||!c)return"";const ev=od*c.p-1;return`<span class="ev ${ev>0?"pos":"neg"}">EV ${ev>0?"+":""}${(ev*100).toFixed(1)}%</span>`}
 
@@ -829,6 +865,11 @@ const lgHead=(lg,extra)=>`<div class="lgh">${img(lgLogo(lg),"lgl")}<span>${LEAGU
 function snapMaps(){const first=new Map(),odds=new Map();
   for(const s of SNAP.values()){const f=first.get(s.id);if(!f||s.t<f.t)first.set(s.id,s);if(s.odds){const w=odds.get(s.id);if(!w||s.t>w.t)odds.set(s.id,s)}}return{first,odds}}
 let SM={first:new Map(),odds:new Map()};
+function planStatus(cands){const B=betPL(),day=dayState(),ready=cands.filter(c=>plan(c).all).length,roi=B.stk?B.pl/B.stk:0;
+  const practice=B.n<150||roi<=0;
+  return`<div class="card pstat">${donut(Math.min(B.n,150),150,64)}<div><b style="font:700 18px var(--cond)">${practice?"Practice phase":"Real-money phase"}</b>
+    <div class="note" style="margin:2px 0 0">${practice?`${B.n} of 150 bets checked${B.n?` · results so far ${B.pl>=0?"+":""}${B.pl.toFixed(1)} units (${roi>=0?"+":""}${(roi*100).toFixed(1)}%)`:""}. Log bets with “I bet this” but don’t stake real money until this reaches 150 with a positive result.`:`Your logged results are positive over ${B.n} bets. Follow the BET cards only.`}</div>
+    <div class="note" style="margin:4px 0 0">Bank ${bankNow().toFixed(1)} units · today ${day.n} of 3 bets${day.ok?"":` · <b style="color:var(--r)">${day.why}</b>`}${ready?` · <b style="color:var(--g)">${ready} BET ready now</b>`:""}</div></div></div>`}
 function renderLive(){
   const box=$("live");
   if(!KEY()){box.innerHTML=`<div class="card onb"><div><h2>Connect API-Football</h2><p class="lead">Paste your key in Data, then refresh during matches. Every refresh is saved, so team stats and insights grow over time.</p><a class="btn pri" href="#data">Add your key</a></div></div>`;return}
@@ -838,7 +879,7 @@ function renderLive(){
   for(const o of list){const c=model(o);if(c){cands.push(c);LASTC.set(o.id,c)}else other.push(o)}
   const stale=META.lastRefresh&&Date.now()-META.lastRefresh>15*60000;
   let h=`<h2>Live</h2><p class="lead">Second half only. Picks have no 2H goal yet (${S.win0}–${S.win1}'), grouped by league with the best chance first.${stale?` Last refresh ${new Date(META.lastRefresh).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}, refresh for current scores.`:""}</p>
-  <div class="sumline"><span><b class="n">${list.length}</b>in the 2nd half</span><span><b class="n">${cands.length}</b>in the window</span><span><b class="n">${other.length}</b>2H goal already in</span></div><p class="note" id="autoInfo" style="margin:-6px 0 12px">${autoText()}</p>`;
+  <div class="sumline"><span><b class="n">${list.length}</b>in the 2nd half</span><span><b class="n">${cands.length}</b>in the window</span><span><b class="n">${other.length}</b>2H goal already in</span></div><p class="note" id="autoInfo" style="margin:-6px 0 12px">${autoText()}</p>${planStatus(cands)}`;
   if(!META.lastRefresh)h+=`<div class="card empty">Tap Refresh to load live matches.</div>`;
   else if(!cands.length)h+=`<div class="card empty">No second-half matches in the ${S.win0}–${S.win1}' window without a 2H goal right now.</div>`;
   else for(const [lg,a] of lgGroups(cands,c=>c.o,comb))h+=lgHead(lg,`${a.length} pick${a.length===1?"":"s"} · best combined ${pct(comb(a[0]))}`)+`<div class="grid">${a.map(candCard).join("")}</div>`;
@@ -849,7 +890,7 @@ function todayHtml(){const t0=new Date();t0.setHours(0,0,0,0);
   const today=[...FX.values()].filter(o=>FIN.has(o.st)&&o.ts>=t0.getTime()).concat(TODAYX);if(!today.length)return"";
   const known=today.filter(o=>lateOf(o)!==null),hits=known.filter(o=>lateOf(o).length);
   let won=0,lost=0;for(const o of today){const s=SM.first.get(o.id);if(s){if(o.gh+o.ga>s.g0)won++;else lost++}}
-  let h=`<h3 class="sec">Finished today</h3><div class="sumline"><span><b class="n">${hits.length}/${known.length}</b>goal ${LL()}${known.length?` (${pct(hits.length/known.length)})`:""}</span>${won+lost?`<span><b class="n">${won}–${lost}</b>picks won–lost</span>`:""}${today.length>known.length?`<span><b class="n">${today.length-known.length}</b>goal minutes pending</span>`:""}</div>`;
+  let h=`<h3 class="sec">Finished today</h3><div class="sumline" style="align-items:center">${known.length?donut(hits.length,known.length,54):""}<span><b class="n">${hits.length}/${known.length}</b>goal ${LL()}${known.length?` (${pct(hits.length/known.length)})`:""}</span>${won+lost?`<span><b class="n">${won}–${lost}</b>picks won–lost</span>`:""}${today.length>known.length?`<span><b class="n">${today.length-known.length}</b>goal minutes pending</span>`:""}</div>`;
   for(const [lg,a] of lgGroups(today,o=>o,o=>{const l=lateOf(o);return(l&&l.length?2:l?1:0)*1e13+o.ts})){const k=a.filter(o=>lateOf(o)!==null),hh=k.filter(o=>lateOf(o).length).length;
     h+=lgHead(lg,k.length?`${hh} of ${k.length} met`:"")+`<div class="grid">${a.map(resCard).join("")}</div>`}
   return h}
@@ -875,7 +916,7 @@ function renderEdges(){
   const bets=[...BETS.values()].sort((a,b)=>b.t-a.t),set=bets.map(b=>[b,betResult(b)]).filter(x=>x[1]!==null);
   let stk=0,pl=0,won=0;for(const [b,r] of set){stk+=b.stake;if(r){won++;pl+=b.stake*(b.odds-1)}else pl-=b.stake}
   const by=(f)=>{const m=new Map();for(const [b,r] of set)for(const k of [].concat(f(b))){const x=m.get(k)||{n:0,w:0,s:0,pl:0};x.n++;x.s+=b.stake;if(r){x.w++;x.pl+=b.stake*(b.odds-1)}else x.pl-=b.stake;m.set(k,x)}return m};
-  const brow=(name,x)=>`<div class="rk"><span>${esc(name)}</span><span class="r n">${x.n}</span><span class="r n">${pct(x.w/x.n)}</span><span class="r n ${x.pl>=0?"up":"dn"}">${x.pl>=0?"+":""}${x.pl.toFixed(1)}u</span><span class="r n x ${x.pl>=0?"up":"dn"}">${x.s?((x.pl/x.s*100).toFixed(0)+"%"):"—"}</span></div>`;
+  const brow=(name,x)=>`<div class="rk"><span>${esc(name)}${x.n>=30&&x.pl<0?' <b style="color:var(--r)">· stop betting this</b>':x.n>=30&&x.pl>0?' <b style="color:var(--g)">· keep going</b>':""}</span><span class="r n">${x.n}</span><span class="r n">${pct(x.w/x.n)}</span><span class="r n ${x.pl>=0?"up":"dn"}">${x.pl>=0?"+":""}${x.pl.toFixed(1)}u</span><span class="r n x ${x.pl>=0?"up":"dn"}">${x.s?((x.pl/x.s*100).toFixed(0)+"%"):"—"}</span></div>`;
   const bhd=`<div class="rk hd"><span></span><span class="r">Bets</span><span class="r">Won</span><span class="r">Profit</span><span class="r x">ROI</span></div>`;
   let hh=`<h2>Edges</h2><p class="lead">Where a goal ${LL()} is more or less likely than usual, based on the score and situation at 62′. Profit comes from betting the green rows when the price is above “Bet if ≥”.</p>
   <div class="bar-row"><select class="inp" id="eLg"><option value="">All leagues</option>${Object.entries(LEAGUES).map(([k,v])=>`<option value="${k}"${ELG==k?" selected":""}>${v}</option>`).join("")}</select><label class="chip">Min games <input class="inp n" data-s="minEdge" type="number" min="10" max="200" value="${S.minEdge}" style="width:64px;padding:3px 6px"></label></div>`;
@@ -889,7 +930,7 @@ function renderEdges(){
     <h3 style="margin-top:12px">By situation</h3>${bhd}${[...by(b=>b.conds||[])].filter(([k,x])=>x.n>=3).sort((a,b)=>b[1].pl-a[1].pl).map(([k,x])=>brow(EDGE.lab[k]||k,x)).join("")||`<p class="note">Shows once a situation has 3+ settled bets.</p>`}`
     :`<p class="note">Tap “I bet this” on a live card after entering your odds. Bets settle at full time and show profit by market and situation here.${bets.length?` ${bets.length} pending.`:""}</p>`}
   ${bets.length?`<h3 style="margin-top:12px">Recent</h3>${bets.slice(0,20).map(b=>{const r=betResult(b);return`<div class="rk"><span>${esc(b.nm)} · ${b.mkt==="corner"?`Over ${b.line} corners`:"2H goal"} at ${b.el}′</span><span class="r n">@${b.odds}</span><span class="r n">${b.stake}u</span><span class="r n ${r===null?"":r?"up":"dn"}">${r===null?"pending":r?"won":"lost"}</span><span class="r n x"></span></div>`}).join("")}`:""}</div>
-  <p class="note">Stakes use ${S.kelly}% Kelly on a ${S.bank}u bank, capped at ${S.maxStake}%. Kelly only helps if the probabilities are well calibrated, so check Insights before raising it.</p>`;
+  <p class="note">Stakes are worked out for you: bigger when the price is better, never more than ${S.maxStake}% of your bank (now ${bankNow().toFixed(1)} units, updated automatically as bets settle).</p>`;
   $("edg").innerHTML=hh}
 
 /* ---------- Archive tab ---------- */
@@ -938,15 +979,15 @@ function renderArchive(){
 function teamLines(o){return`<div class="tm">${tbtn(o.h)}<b class="sc n">${o.gh??"-"}</b></div><div class="tm">${tbtn(o.a)}<b class="sc n">${o.ga??"-"}</b></div>`}
 function candCard(c){const o=c.o,id=o.id,cm=c.cm,ed=edgeFor(o,c.el),best=cornBest(c);
   const logged=[...BETS.values()].filter(b=>b.id===id).map(b=>b.mkt);
-  return`<article class="mc${best?" corn":""}" data-card="${id}"><div class="mh">${img(lgLogo(o.lg),"lgl")}<span>${LEAGUES[o.lg]}</span>${best?`<span class="bestc">Corners look better</span>`:""}<span class="min n">${minLbl(o)}</span></div>
-  ${teamLines(o)}<div class="htl">HT ${o.hth??o.gh}–${o.hta??o.ga}${o.rd&&o.rd.length?` · <span style="color:var(--r)">${o.rd.length} red</span>`:""}</div>${tl(o)}
-  <div class="nums"><div class="p"><span class="k">P(2H goal)</span><b class="n">${pct(c.p)}</b></div><div><span class="k">Fair odds</span><b class="n">${c.fair.toFixed(2)}</b></div><div><span class="k">Bet only if ≥</span><b class="n">${c.betIf.toFixed(2)}</b></div></div>
+  return`<article class="mc${best?" corn":""}${plan(c).all?" betnow":""}" data-card="${id}"><div class="mh">${img(lgLogo(o.lg),"lgl")}<span>${LEAGUES[o.lg]}</span>${best?`<span class="bestc">Corners look better</span>`:""}<span class="min n">${minLbl(o)}</span></div>
+  ${teamLines(o)}<div class="htl">HT ${o.hth??o.gh}–${o.hta??o.ga}${o.rd&&o.rd.length?` · <span style="color:var(--r)">${o.rd.length} red</span>`:""}</div>${tl(o)}${planBox(c)}
+  <div class="nums"><div class="p"><span class="k">Chance of 2H goal</span><b class="n">${pct(c.p)}</b></div><div><span class="k">Fair price</span><b class="n">${c.fair.toFixed(2)}</b></div><div><span class="k">Minimum odds</span><b class="n">${c.betIf.toFixed(2)}</b></div></div>
   <div class="sub2">Goal ${LL()}: <b class="n">${pct(c.p63)}</b> · fair ${(1/c.p63).toFixed(2)}${c.cm?` · Combined: <b class="n">${pct(comb(c))}</b>`:""}</div>
   ${ed?`<div class="edge ${ed.l>0?"up":"dn"}">${ed.l>0?"▲":"▼"} ${esc(ed.lab)}: ${pct(ed.r)} had a goal ${LL()} (${ed.l>0?"+":""}${Math.round(ed.l*100)} pts, n ${ed.n})</div>`:""}
   <div class="odds"><label for="od${id}">Your odds</label><input class="inp n" id="od${id}" data-odds="${id}" inputmode="decimal" placeholder="${c.betIf.toFixed(2)}" value="${ODDS[id]||""}"><span id="ev${id}">${evHtml(c.p,ODDS[id])}</span>
     <button class="btn sm bet" data-bet="goal" data-id="${id}">${logged.includes("goal")?"Logged ✓":"I bet this"}</button></div>
   ${cm?`<div class="cbox"><div class="chd">Corners ${cm.C} now (${cm.ch}–${cm.ca}) · about ${cm.lam.toFixed(1)} more expected</div>
-    <div class="nums c3"><div class="p"><span class="k">Over ${cm.line} corners</span><b class="n">${pct(cm.p)}</b></div><div><span class="k">Fair odds</span><b class="n">${cm.fair.toFixed(2)}</b></div><div><span class="k">Bet only if ≥</span><b class="n">${cm.betIf.toFixed(2)}</b></div></div>
+    <div class="nums c3"><div class="p"><span class="k">Over ${cm.line} corners</span><b class="n">${pct(cm.p)}</b></div><div><span class="k">Fair price</span><b class="n">${cm.fair.toFixed(2)}</b></div><div><span class="k">Minimum odds</span><b class="n">${cm.betIf.toFixed(2)}</b></div></div>
     <div class="odds"><label for="oc${id}">Your odds</label><input class="inp n" id="oc${id}" data-codds="${id}" inputmode="decimal" placeholder="${cm.betIf.toFixed(2)}" value="${ODDS["c"+id]||""}"><span id="cev${id}">${evHtml(cm.p,ODDS["c"+id])}</span>
     <button class="btn sm bet" data-bet="corner" data-id="${id}">${logged.includes("corner")?"Logged ✓":"I bet this"}</button></div></div>`:`<div class="mf">Corners: no live corner count for this match yet.</div>`}
   <div class="mf">Pre-match 2H goals ${c.pre.toFixed(2)} · ${esc(c.note)}${c.reds?` · ${c.reds} red`:""} · History ${c.hn||"league avg"} / ${c.an||"league avg"} games · ${c.mt==="data"?`Data model (${c.en} matches at ${c.el}′)`:"Classic model"}</div></article>`}
@@ -1086,12 +1127,12 @@ function renderData(){
     <div class="bar-row">${S.alerts&&"Notification" in window&&Notification.permission==="granted"?`<button class="btn sm" id="alOff">Turn off</button><button class="btn sm" id="alTest">Send a test</button>`:`<button class="btn pri sm" id="alOn">Turn on alerts</button>`}</div>
     <div class="setg">${setf("alertP","Alert when P(2H goal) reaches (%)",40,99)}<div class="fld"><label for="alEv">Also alert on value</label><select class="inp" id="alEv"><option value="1"${S.alertEv?" selected":""}>When my odds give +EV</option><option value="0"${!S.alertEv?" selected":""}>No</option></select></div></div></div>
   </div>
-  <div class="card"><h3>Model</h3><div class="setg"><div class="fld"><label for="mdSel">Probability model</label><select class="inp" id="mdSel"><option value="auto"${S.model!=="classic"?" selected":""}>Data model when history allows</option><option value="classic"${S.model==="classic"?" selected":""}>Classic (original script)</option></select>
+  <div class="card"><h3>Model</h3><div class="setg"><div class="fld"><label for="mdSel">Probability model</label><select class="inp" id="mdSel"><option value="auto"${S.model!=="classic"?" selected":""}>Automatic: use whichever is proving more accurate</option><option value="classic"${S.model==="classic"?" selected":""}>Classic (original script)</option></select>
     <span class="note" style="margin:0">The data model uses your history’s real chance of another goal after each minute, adjusted for team strength and live stats. ${CURVE.all?`Built from ${CURVE.all.n[0]} matches with goal minutes.`:"Needs about 80+ matches with goal minutes."} Insights compares both.</span></div></div></div>
   <div class="card"><h3>Settings</h3><div class="setg">
     ${setf("win0","Window start (minute)",0,90)}${setf("win1","Window end (minute)",0,95)}${setf("edge","Edge over fair odds (%)",0,50)}
     ${setf("late","Late goal from minute",46,90,"Counts goals from this minute. The API gives whole minutes, so 63 covers 62:00–62:59 onwards.")}
-    ${setf("rpm","Requests per minute (plan limit)",1,450)}${setf("reserve","Keep this many requests for live",0,1000)}${setf("catchup","Goal-minute requests per refresh",0,10)}${setf("maxStats","Live stats requests per refresh (free plan)",0,20)}${setf("prior","Team-rate shrinkage (games)",0,30)}${setf("minN","Min games for insights",3,60)}${setf("cornT","Corner line: target chance (%)",55,90)}${setf("bank","Bankroll (units)",1,100000)}${setf("kelly","Kelly fraction (%)",0,100)}${setf("maxStake","Max stake (% of bank)",0,20)}
+    ${setf("rpm","Requests per minute (plan limit)",1,450)}${setf("reserve","Keep this many requests for live",0,1000)}${setf("catchup","Goal-minute requests per refresh",0,10)}${setf("maxStats","Live stats requests per refresh (free plan)",0,20)}${setf("prior","Team-rate shrinkage (games)",0,30)}${setf("minN","Min games for insights",3,60)}${setf("cornT","Corner line: target chance (%)",55,90)}${setf("bank","Starting bank (units)",1,100000)}${setf("kelly","Stake size (25 = careful)",0,100)}${setf("maxStake","Max stake (% of bank)",0,20)}
   </div></div>
   <div class="card"><h3>Backup</h3><div class="bar-row"><button class="btn sm" id="exp">Export backup</button><label class="btn sm">Import backup<input type="file" id="imp" accept=".json" hidden></label><button class="btn dng sm" id="wipe">Delete all matches</button></div></div>`}
 function setf(k,l,mn,mx,hint){return`<div class="fld"><label for="s_${k}">${l}</label><input class="inp n" id="s_${k}" data-s="${k}" type="number" min="${mn}" max="${mx}" value="${S[k]}">${hint?`<span class="note" style="margin:0">${hint}</span>`:""}</div>`}
